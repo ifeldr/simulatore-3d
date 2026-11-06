@@ -15,6 +15,14 @@ In fondo a `_data/calcolatore_3d.yml` c'è la lista `stampanti`: ognuna ha area 
 costo orario, velocità e materiali supportati. Si sceglie una stampante per i nuovi file e la si può
 cambiare file per file nell'elenco: ogni file mantiene la sua scelta e il prezzo si ricalcola. Le stampanti presenti sono esempi: tieni solo le tue e correggi i valori.
 
+## Resina
+
+Oltre alle stampanti a filamento ci sono quelle a resina (`tecnologia: resina` in
+`_data/calcolatore_3d.yml`), con le loro resine nell'elenco dei materiali. Per la resina il
+simulatore calcola i millilitri di resina (pezzo pieno o svuotato), il tempo in base all'altezza
+dei pezzi e ai `secondi_strato` della stampante (i pezzi sullo stesso piatto si stampano insieme)
+e il costo di lavaggio e polimerizzazione per ogni stampa.
+
 ## File
 
 - `index.html`: la pagina (intestazione e testi)
