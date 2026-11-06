@@ -190,37 +190,40 @@
     });
     el.printerField.hidden = false;
   }
-  function printer() {
+  // Stampante per id; senza id restituisce quella scelta per i nuovi file
+  function printer(id) {
     if (!CONFIG.printers.length) return null;
-    return CONFIG.printers.filter(function (p) { return p.id === el.printer.value; })[0] || CONFIG.printers[0];
+    if (id === undefined) id = el.printer.value;
+    return CONFIG.printers.filter(function (p) { return p.id === id; })[0] || CONFIG.printers[0];
   }
-  function buildVolume() { var p = printer(); return p ? p.buildVolume : CONFIG.buildVolume; }
-  function machineRate() { var p = printer(); return p ? p.machineRate : CONFIG.machineRate; }
-  function powerKW() { var p = printer(); return (p ? p.powerW : CONFIG.powerW) / 1000; }
+  function printerOf(m) { return printer(m.printerId); }
+  function buildVolume(p) { return p ? p.buildVolume : CONFIG.buildVolume; }
+  function machineRate(p) { return p ? p.machineRate : CONFIG.machineRate; }
+  function powerKW(p) { return (p ? p.powerW : CONFIG.powerW) / 1000; }
   // Costo dell'energia: il valore inserito nella pagina viene ricordato su questo browser
   try { var savedEnergy = localStorage.getItem('c3d-energia'); if (savedEnergy !== null && +savedEnergy >= 0) el.energy.value = savedEnergy; } catch (e) {}
   if (el.energy.value === '') el.energy.value = String(CONFIG.energyPrice);
   function energyPrice() { var v = parseFloat(String(el.energy.value).replace(',', '.')); return isFinite(v) && v >= 0 ? v : CONFIG.energyPrice; }
-  function printerSpeed() { var p = printer(); return p ? p.speed : 1; }
+  function printerSpeed(p) { return p ? p.speed : 1; }
   // Un materiale è stampabile se la stampante non ha un elenco o se il nome compare nell'elenco
   // (basta la prima parola: "ASA" vale anche per "ASA (per esterni)").
   function primaParola(t) { return String(t).trim().split(/[\s(]/)[0].toLowerCase(); }
-  function materialAllowed(mt) {
-    var p = printer();
+  function materialAllowed(mt, p) {
     if (!p || !p.materials) return true;
     return p.materials.some(function (x) { return primaParola(x) === primaParola(mt.name); });
   }
   function refreshMaterialOptions() {
-    var sels = [el.material].concat(models.map(function (m) { return m.row.matSel; }));
-    sels.forEach(function (sel) {
+    var sels = [{ sel: el.material, p: printer() }].concat(models.map(function (m) { return { sel: m.row.matSel, p: printerOf(m) }; }));
+    sels.forEach(function (x) {
+      var sel = x.sel;
       Array.prototype.forEach.call(sel.options, function (op) {
-        var ok = materialAllowed(matById(op.value));
+        var ok = materialAllowed(matById(op.value), x.p);
         op.disabled = !ok;
         op.textContent = op.getAttribute('data-nome') + (ok ? '' : (sel === el.material ? ' (non disponibile)' : ' ✗'));
       });
     });
-    if (!materialAllowed(matById(el.material.value))) {
-      var first = CONFIG.materials.filter(materialAllowed)[0];
+    if (!materialAllowed(matById(el.material.value), printer())) {
+      var first = CONFIG.materials.filter(function (mt) { return materialAllowed(mt, printer()); })[0];
       if (first) el.material.value = first.id;
     }
     var p = printer();
@@ -316,6 +319,7 @@
 
   // Stima per un singolo pezzo di un modello (costi già con ricarico, IVA esclusa)
   function estimatePiece(m, o) {
+    var pr = printerOf(m);
     var mt = matById(m.materialId);
     var s = o.unit * m.scale / 100;
     var V = m.stats.vol * s * s * s;
@@ -325,18 +329,18 @@
     var printed = shell + (V - shell) * m.infill / 100;
     if (m.supports) printed *= 1 + CONFIG.supports.material;
     var grams = printed / 1000 * mt.density;
-    var sec = printed / (o.quality.flow * mt.speed * printerSpeed()) + (size[2] / o.quality.layer) * CONFIG.layerOverheadSec;
+    var sec = printed / (o.quality.flow * mt.speed * printerSpeed(pr)) + (size[2] / o.quality.layer) * CONFIG.layerOverheadSec;
     if (m.supports) sec *= 1 + CONFIG.supports.time;
     var hours = sec / 3600;
     var k = 1 + CONFIG.markup;
     var a = size.slice().sort(function (x, y) { return x - y; });
-    var b = buildVolume().slice().sort(function (x, y) { return x - y; });
+    var b = buildVolume(pr).slice().sort(function (x, y) { return x - y; });
     return {
       V: V, size: size, grams: grams, hours: hours,
       mat: grams / 1000 * mt.pricePerKg * (1 + CONFIG.waste) * k,
-      mach: hours * machineRate() * k,
-      kwh: hours * powerKW(),
-      energy: hours * powerKW() * energyPrice(),
+      mach: hours * machineRate(pr) * k,
+      kwh: hours * powerKW(pr),
+      energy: hours * powerKW(pr) * energyPrice(),
       fits: a[0] <= b[0] && a[1] <= b[1] && a[2] <= b[2]
     };
   }
@@ -374,17 +378,21 @@
       if (!r.fits) tooBig++;
       var piecePrice = ((r.mat + r.mach) * (1 - disc) + r.energy) * (1 + CONFIG.vat);
       m.row.meta.textContent = fmtSize(r.size) + ', ' + num1.format(r.grams) + ' g, ' + money.format(piecePrice) + ' a pezzo';
-      var warn = !r.fits ? 'Supera l\'area di stampa: riduci la scala o lo dividiamo in parti.'
-        : !materialAllowed(matById(m.materialId)) ? matById(m.materialId).name + ' non si stampa su questa stampante: scegli un altro materiale.'
+      var warn = !r.fits ? 'Supera l\'area di stampa di ' + (printerOf(m) ? printerOf(m).name : 'questa stampante') + ': riduci la scala o scegli una stampante più grande.'
+        : !materialAllowed(matById(m.materialId), printerOf(m)) ? matById(m.materialId).name + ' non si stampa su ' + (printerOf(m) ? printerOf(m).name : 'questa stampante') + ': scegli un altro materiale o un\'altra stampante.'
         : (m.unitHint || '');
-      if (!materialAllowed(matById(m.materialId))) wrongMat++;
+      if (!materialAllowed(matById(m.materialId), printerOf(m))) wrongMat++;
       m.row.warn.textContent = warn; m.row.warn.hidden = !warn;
       m.r = r;
       m.row.swatch.style.background = matById(m.materialId).color;
     });
-    hours += CONFIG.heatUpMinutes / 60;
-    kwh += CONFIG.heatUpMinutes / 60 * powerKW();
-    energy += CONFIG.heatUpMinutes / 60 * powerKW() * energyPrice();
+    // Riscaldamento: una volta per ogni stampante usata nell'ordine
+    var usate = {};
+    models.forEach(function (m) { usate[m.printerId || '-'] = printerOf(m); });
+    Object.keys(usate).forEach(function (id) {
+      var h = CONFIG.heatUpMinutes / 60;
+      hours += h; kwh += h * powerKW(usate[id]); energy += h * powerKW(usate[id]) * energyPrice();
+    });
 
     var discount = (mat + mach) * disc;
     var net = mat + mach - discount + energy + CONFIG.setupFee;
@@ -392,7 +400,8 @@
     net += minAdj;
     var vat = net * CONFIG.vat, total = net + vat;
     el.applyAll.hidden = models.length < 2 || models.every(function (m) {
-      return m.materialId === el.material.value && m.infill === +el.infill.value && m.supports === el.supports.checked;
+      return m.materialId === el.material.value && m.infill === +el.infill.value && m.supports === el.supports.checked &&
+        (!CONFIG.printers.length || m.printerId === el.printer.value);
     });
     last = { o: o, total: total, grams: grams, pieces: pieces, disc: disc };
 
@@ -417,10 +426,10 @@
     el.total.textContent = money.format(total);
     el.summary.textContent = models.length === 1 ? '1 file' : models.length + ' file';
 
-    if (wrongMat) setMsg(wrongMat === 1 ? 'Un file usa un materiale che questa stampante non supporta.'
-      : wrongMat + ' file usano materiali che questa stampante non supporta.', 'warn');
-    else if (tooBig) setMsg(tooBig === 1 ? 'Un file supera l\'area di stampa (' + buildVolume().join(' × ') + ' mm).'
-      : tooBig + ' file superano l\'area di stampa (' + buildVolume().join(' × ') + ' mm).', 'warn');
+    if (wrongMat) setMsg(wrongMat === 1 ? 'Un file usa un materiale che la sua stampante non supporta.'
+      : wrongMat + ' file usano materiali che la loro stampante non supporta.', 'warn');
+    else if (tooBig) setMsg(tooBig === 1 ? 'Un file supera l\'area di stampa della sua stampante.'
+      : tooBig + ' file superano l\'area di stampa della loro stampante.', 'warn');
     else if (notice) setMsg(notice, 'error');
     else if (!busy) setMsg('');
 
@@ -488,6 +497,25 @@
     supLabel.appendChild(supBox); supLabel.appendChild(document.createTextNode('Supporti'));
     var supHidden = document.createElement('span'); supHidden.className = 'c3d-vh'; supHidden.textContent = ' (' + m.name + ')';
     supLabel.appendChild(supHidden);
+    var prSel = null;
+    if (CONFIG.printers.length) {
+      var prLabel = document.createElement('label');
+      prLabel.appendChild(document.createTextNode('Stampante'));
+      var prHidden = document.createElement('span'); prHidden.className = 'c3d-vh'; prHidden.textContent = ' (' + m.name + ')';
+      prLabel.appendChild(prHidden);
+      prSel = document.createElement('select'); prSel.className = 'c3d-file-printer';
+      CONFIG.printers.forEach(function (x) {
+        var op = document.createElement('option'); op.value = x.id; op.textContent = x.name; prSel.appendChild(op);
+      });
+      prSel.value = m.printerId;
+      prSel.addEventListener('change', function () {
+        m.printerId = prSel.value; refreshMaterialOptions();
+        if (m.id === selectedId) updateGrid();
+        update();
+      });
+      prLabel.appendChild(prSel);
+      extra.appendChild(prLabel);
+    }
     extra.appendChild(infLabel); extra.appendChild(supLabel);
 
     var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'c3d-file-remove';
@@ -497,7 +525,7 @@
 
     li.appendChild(pick); li.appendChild(matWrap); li.appendChild(qty.wrap); li.appendChild(scale.wrap); li.appendChild(rm); li.appendChild(extra);
     el.list.appendChild(li);
-    m.row = { li: li, meta: meta, warn: warn, matSel: matSel, infSel: infSel, supBox: supBox, swatch: sw };
+    m.row = { li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, infSel: infSel, supBox: supBox, swatch: sw };
   }
 
   function markActive() {
@@ -506,7 +534,7 @@
 
   function select(id) {
     selectedId = id; markActive();
-    update(); showPreview();
+    updateGrid(); update(); showPreview();
   }
 
   function removeModel(id) {
@@ -558,7 +586,7 @@
         var maxDim = Math.max.apply(null, stats.size);
         var hint = maxDim < 5 ? 'Misura meno di 5 mm: controlla l\'unità dei file.'
           : maxDim > 2000 ? 'Supera i 2 metri: controlla l\'unità dei file.' : '';
-        var m = { id: nextId++, name: file.name, pos: pos, stats: stats, qty: 1, scale: 100, materialId: el.material.value,
+        var m = { id: nextId++, name: file.name, pos: pos, stats: stats, qty: 1, scale: 100, materialId: el.material.value, printerId: CONFIG.printers.length ? el.printer.value : null,
                   infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
         models.push(m); addRow(m); refreshMaterialOptions();
         if (selectedId === null) { selectedId = m.id; markActive(); update(); showPreview(); }
@@ -586,13 +614,16 @@
   });
 
   el.material.addEventListener('change', update);
-  if (el.printer) el.printer.addEventListener('change', function () { refreshMaterialOptions(); updateGrid(); update(); });
+  // La stampante in alto vale per i nuovi file: quelli già caricati mantengono la loro (vedi "Applica a tutti")
+  if (el.printer) el.printer.addEventListener('change', function () { refreshMaterialOptions(); update(); });
   el.applyAll.addEventListener('click', function () {
     models.forEach(function (m) {
       m.materialId = el.material.value; m.row.matSel.value = m.materialId;
       m.infill = +el.infill.value; m.row.infSel.value = m.infill;
       m.supports = el.supports.checked; m.row.supBox.checked = m.supports;
+      if (m.row.prSel) { m.printerId = el.printer.value; m.row.prSel.value = m.printerId; }
     });
+    refreshMaterialOptions(); updateGrid();
     update();
   });
   [el.infill, el.unit, el.supports].forEach(function (c) { // i predefiniti aggiornano solo il pulsante "Applica a tutti"
@@ -678,7 +709,7 @@
   // Griglia del piatto con la misura della stampante scelta
   function updateGrid() {
     if (!view) return;
-    var T = view.T, b = buildVolume(), lato = Math.max(b[0], b[1]);
+    var cur = current(), T = view.T, b = buildVolume(cur ? printerOf(cur) : printer()), lato = Math.max(b[0], b[1]);
     if (view.grid) { view.scene.remove(view.grid); view.grid.geometry.dispose(); }
     view.grid = new T.GridHelper(lato, Math.max(1, Math.round(lato / 10)), 0x5a6270, 0x3a404a);
     view.scene.add(view.grid); render();

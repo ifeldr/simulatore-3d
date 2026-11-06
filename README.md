@@ -12,8 +12,8 @@ e fai commit: GitHub Pages aggiorna la pagina in un paio di minuti.
 ## Stampanti
 
 In fondo a `_data/calcolatore_3d.yml` c'è la lista `stampanti`: ognuna ha area di stampa,
-costo orario, velocità e materiali supportati. Il cliente la sceglie da un menu e il prezzo
-si ricalcola. Le stampanti presenti sono esempi: tieni solo le tue e correggi i valori.
+costo orario, velocità e materiali supportati. Si sceglie una stampante per i nuovi file e la si può
+cambiare file per file nell'elenco: ogni file mantiene la sua scelta e il prezzo si ricalcola. Le stampanti presenti sono esempi: tieni solo le tue e correggi i valori.
 
 ## File
 

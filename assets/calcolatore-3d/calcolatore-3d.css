@@ -142,3 +142,4 @@
 #c3d-calc .is-flash{animation:c3d-flash 1.2s ease-out}
 @keyframes c3d-flash{from{background:rgba(244,180,0,.28)}to{background:transparent}}
 @media (prefers-reduced-motion:reduce){#c3d-calc .is-flash{animation:none}}
+#c3d-calc .c3d-file-extra select.c3d-file-printer{max-width:13em}
