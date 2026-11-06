@@ -63,21 +63,58 @@ materiali:
     velocita: 0.45
     colore: "#E5673E"
 
+  # Resine (tecnologia: resina): compaiono solo con le stampanti a resina.
+  # densita in g/ml, prezzo_kg in € per kg (le resine si vendono di solito in flaconi da 1 kg)
+  - nome: Resina standard
+    tecnologia: resina
+    descrizione: "Dettaglio finissimo e superficie liscia: miniature, figure, gioielli da fusione."
+    densita: 1.10
+    prezzo_kg: 30
+    colore: "#9AA3AE"
+  - nome: Resina ABS-like
+    tecnologia: resina
+    descrizione: "Più tenace e meno fragile della standard, per pezzi che vengono maneggiati."
+    densita: 1.10
+    prezzo_kg: 38
+    colore: "#5E6670"
+  - nome: Resina lavabile in acqua
+    tecnologia: resina
+    descrizione: "Si lava con acqua invece che con alcol: pratica, con resa simile alla standard."
+    densita: 1.10
+    prezzo_kg: 35
+    colore: "#C9B79C"
+  - nome: Resina trasparente
+    tecnologia: resina
+    descrizione: "Trasparente dopo la lucidatura: lenti, diffusori, pezzi decorativi."
+    densita: 1.12
+    prezzo_kg: 40
+    colore: "#CFE6EE"
+  - nome: Resina tough
+    tecnologia: resina
+    descrizione: "Resistente agli urti, per pezzi meccanici con dettaglio fine."
+    densita: 1.15
+    prezzo_kg: 55
+    colore: "#3E6F8E"
+
 # ---------- Qualità di stampa ----------
-# strato_mm: altezza dello strato
+# strato_mm: altezza dello strato per le stampanti a filamento
+# strato_resina_mm: altezza dello strato per le stampanti a resina
 # portata_mm3s: volume medio stampato al secondo, spostamenti inclusi.
 #   Più è alta, più la stima del tempo è breve: calibrala confrontando
 #   qualche stima con il tempo indicato dal tuo slicer.
 qualita:
   - nome: Bozza
     strato_mm: 0.28
+    strato_resina_mm: 0.10
     portata_mm3s: 9
   - nome: Standard
     strato_mm: 0.20
+    strato_resina_mm: 0.05
     portata_mm3s: 6
     predefinita: true
   - nome: Fine
     strato_mm: 0.12
+    strato_resina_mm: 0.03
     portata_mm3s: 3.5
 
 # ---------- Stampante e limiti ----------
@@ -89,6 +126,12 @@ max_mb_per_file: 80               # dimensione massima di ogni file
 spessore_pareti_mm: 0.8           # pareti e strati pieni (2 perimetri da 0.4 mm)
 supporti_materiale_percento: 15   # materiale in più per i file con supporti
 supporti_tempo_percento: 10       # tempo in più per i file con supporti
+
+# ---------- Stampa a resina ----------
+resina_pareti_mm: 2.0                    # spessore delle pareti dei pezzi svuotati
+resina_supporti_percento: 10             # resina in più per i pezzi con supporti
+resina_post_lavorazione: 1.00            # € per ogni stampa (piatto) per lavaggio e polimerizzazione (alcol, guanti, carta)
+resina_occupazione_piatto_percento: 60   # quanta parte del piatto si riempie davvero di pezzi
 riscaldamento_minuti: 5           # per ordine
 cambio_strato_secondi: 2
 
@@ -109,6 +152,10 @@ cambio_strato_secondi: 2
 #                   Se ometti la riga, la stampante accetta tutti i materiali.
 #   note:           testo facoltativo mostrato sotto il menu
 #   predefinita:    true per la stampante proposta all'apertura della pagina
+#   tecnologia:     "resina" per le stampanti a resina (se manca: filamento). Per queste stampanti
+#                   il tempo dipende dall'altezza del pezzo: secondi_strato = secondi per ogni strato
+#                   (esposizione + sollevamento) con resina standard. costo_orario e velocita come sopra;
+#                   la riga materiali non serve: si usano le resine dell'elenco materiali.
 # Per togliere il menu: stampanti: []
 stampanti:
   - marca: Bambu Lab
@@ -507,3 +554,122 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "CoreXY chiusa, camera riscaldata a 65 °C."
+
+  # ---------- Stampanti a resina ----------
+  - marca: Elegoo
+    nome: Mars 5
+    tecnologia: resina
+    area_stampa_mm: [143.43, 89.6, 150]
+    costo_orario: 0.50
+    potenza_w: 40
+    secondi_strato: 5.5
+    chiusa: true
+    note: "Formato piccolo. Max 70 mm/h."
+  - marca: Elegoo
+    nome: Mars 5 Ultra
+    tecnologia: resina
+    area_stampa_mm: [153.36, 77.76, 165]
+    costo_orario: 0.60
+    potenza_w: 50
+    secondi_strato: 3.5
+    chiusa: true
+    note: "Formato piccolo, rilascio inclinato. Max 150 mm/h."
+  - marca: Elegoo
+    nome: Saturn 4
+    tecnologia: resina
+    area_stampa_mm: [218.88, 122.88, 220]
+    costo_orario: 0.80
+    potenza_w: 70
+    secondi_strato: 5.5
+    chiusa: true
+    note: "Formato medio. Max 70 mm/h."
+  - marca: Elegoo
+    nome: Saturn 4 Ultra 16K
+    tecnologia: resina
+    area_stampa_mm: [211.68, 118.37, 220]
+    costo_orario: 1.00
+    potenza_w: 90
+    secondi_strato: 4.0
+    chiusa: true
+    note: "Formato medio, 16K, vasca riscaldata. Max 150 mm/h."
+  - marca: Elegoo
+    nome: Jupiter 2
+    tecnologia: resina
+    area_stampa_mm: [302.4, 161.98, 300]
+    costo_orario: 1.40
+    potenza_w: 120
+    secondi_strato: 6.0
+    chiusa: true
+    note: "Grande formato, riscaldamento resina. Max 90 mm/h."
+  - marca: Anycubic
+    nome: Photon Mono 4 Ultra
+    tecnologia: resina
+    area_stampa_mm: [153.4, 87, 165]
+    costo_orario: 0.60
+    potenza_w: 45
+    secondi_strato: 4.5
+    chiusa: true
+    note: "Formato piccolo. Fino a 80 mm/h con resina standard (strato 0,1 mm)."
+  - marca: Anycubic
+    nome: Photon Mono M7 Pro
+    tecnologia: resina
+    area_stampa_mm: [223, 126, 230]
+    costo_orario: 0.90
+    potenza_w: 80
+    secondi_strato: 3.5
+    chiusa: true
+    note: "Formato medio, vasca riscaldata. Fino a 130 mm/h con resina standard (strato 0,1 mm)."
+  - marca: Anycubic
+    nome: Photon Mono M7 Max
+    tecnologia: resina
+    area_stampa_mm: [298, 164, 300]
+    costo_orario: 1.30
+    potenza_w: 110
+    secondi_strato: 6.5
+    chiusa: true
+    note: "Grande formato."
+  - marca: Anycubic
+    nome: Photon P1
+    tecnologia: resina
+    area_stampa_mm: [223, 126, 230]
+    costo_orario: 1.00
+    potenza_w: 80
+    secondi_strato: 6.0
+    chiusa: true
+    note: "Formato medio, vasca riscaldata. 25–35 mm/h con resina standard (strato 0,05 mm)."
+  - marca: Anycubic
+    nome: Photon P1 Max
+    tecnologia: resina
+    area_stampa_mm: [285.5, 214, 300]
+    costo_orario: 1.50
+    potenza_w: 120
+    secondi_strato: 9.0
+    chiusa: true
+    note: "Grande formato, vasca riscaldata. 15–25 mm/h con resina standard (strato 0,05 mm)."
+  - marca: Creality
+    nome: HALOT-X1 Neo
+    tecnologia: resina
+    area_stampa_mm: [153.36, 77.76, 160]
+    costo_orario: 0.50
+    potenza_w: 40
+    secondi_strato: 5.0
+    chiusa: true
+    note: "Formato piccolo, 9K."
+  - marca: Creality
+    nome: HALOT-X1
+    tecnologia: resina
+    area_stampa_mm: [211.68, 118.37, 200]
+    costo_orario: 1.00
+    potenza_w: 80
+    secondi_strato: 3.5
+    chiusa: true
+    note: "Formato medio, 16K. Max 170 mm/h."
+  - marca: Creality
+    nome: HALOT-MAGE S
+    tecnologia: resina
+    area_stampa_mm: [228, 128, 230]
+    costo_orario: 0.90
+    potenza_w: 70
+    secondi_strato: 4.0
+    chiusa: true
+    note: "Formato medio, 14K. Max 150 mm/h."

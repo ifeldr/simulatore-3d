@@ -39,6 +39,10 @@
         <legend class="c3d-label">Impostazioni per i nuovi file <button type="button" class="c3d-linkbtn" id="c3d-apply-all" hidden>Applica a tutti</button></legend>
         <p class="c3d-help">Ogni file caricato parte da queste impostazioni. Puoi cambiarle file per file nell'elenco.</p>
         <div class="c3d-field" id="c3d-printer-field" hidden>
+          <div class="c3d-tech-field" id="c3d-tech-field" hidden>
+            <label class="c3d-label" for="c3d-tech">Tecnologia</label>
+            <select id="c3d-tech"></select>
+          </div>
           <div class="c3d-row">
             <div>
               <label class="c3d-label" for="c3d-brand">Marca</label>
@@ -55,9 +59,12 @@
           <label class="c3d-label" for="c3d-material">Materiale</label>
           <select id="c3d-material"></select>
         </div>
-        <div class="c3d-field">
+        <div class="c3d-field" id="c3d-infill-field">
           <label class="c3d-label" for="c3d-infill">Riempimento interno <output id="c3d-infill-out" for="c3d-infill">20%</output></label>
           <input type="range" id="c3d-infill" min="10" max="100" step="5" value="20">
+        </div>
+        <div class="c3d-field" id="c3d-hollow-field" hidden>
+          <label class="c3d-check"><input type="checkbox" id="c3d-hollow"> Pezzi svuotati (meno resina, servono fori di drenaggio)</label>
         </div>
         <div class="c3d-field">
           <label class="c3d-check"><input type="checkbox" id="c3d-supports"> Con supporti</label>

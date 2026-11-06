@@ -143,3 +143,5 @@
 @keyframes c3d-flash{from{background:rgba(244,180,0,.28)}to{background:transparent}}
 @media (prefers-reduced-motion:reduce){#c3d-calc .is-flash{animation:none}}
 #c3d-calc .c3d-file-extra select.c3d-file-printer,#c3d-calc .c3d-file-extra select.c3d-file-brand{max-width:9.5em}
+#c3d-calc .c3d-tech-field{margin-bottom:12px}
+#c3d-calc .c3d-file-extra select.c3d-file-tech{max-width:7.5em}
