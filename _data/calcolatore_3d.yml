@@ -92,10 +92,13 @@ cambio_strato_secondi: 2
 
 # ---------- Stampanti ----------
 # Il cliente sceglie la stampante da un menu e il simulatore usa i suoi parametri.
-# Tieni solo le stampanti che possiedi davvero e correggi i valori: questi sono esempi.
+# Area di stampa, telaio aperto o chiuso e note tecniche vengono dal sito e dal blog ufficiali
+# di Bambu Lab (novembre 2026); per le stampanti a doppio ugello è indicata l'area massima.
+# Costo orario e velocità sono stime: adattali alle tue macchine e togli quelle che non hai.
 #   area_stampa_mm: X, Y, Z in mm (i modelli più grandi vengono segnalati)
 #   costo_orario:   € per ora di stampa su questa macchina (energia, usura, ammortamento)
-#   velocita:       quanto è veloce rispetto alla portata delle qualità (1 = uguale, 1.5 = 50% più veloce)
+#   velocita:       quanto è veloce rispetto alla portata delle qualità (1 = uguale, 1.5 = 50% più veloce);
+#                   stimata da velocità e accelerazione massime dichiarate
 #   chiusa:         true se la stampante è chiusa (adatta ad ABS e ASA)
 #   materiali:      materiali che può stampare, con i nomi usati sopra (basta la prima parola).
 #                   Se ometti la riga, la stampante accetta tutti i materiali.
@@ -105,33 +108,90 @@ cambio_strato_secondi: 2
 stampanti:
   - nome: Bambu Lab A1 mini
     area_stampa_mm: [180, 180, 180]
-    costo_orario: 1.20
-    velocita: 1.4
+    costo_orario: 1.00
+    velocita: 1.3
     chiusa: false
     materiali: [PLA, PETG, TPU]
-    note: "Ideale per pezzi piccoli e dettagliati."
+    note: "Telaio aperto, ideale per pezzi piccoli. Max 500 mm/s."
   - nome: Bambu Lab A1
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.50
-    velocita: 1.4
+    costo_orario: 1.20
+    velocita: 1.3
     chiusa: false
     materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
     predefinita: true
-  - nome: Bambu Lab P1S
+  - nome: Bambu Lab A2L
+    area_stampa_mm: [330, 320, 325]
+    costo_orario: 1.40
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto, grande formato. Max 500 mm/s."
+  - nome: Bambu Lab P2S
     area_stampa_mm: [256, 256, 256]
+    costo_orario: 1.60
+    velocita: 1.5
+    chiusa: true
+    note: "Chiusa, adatta anche ad ABS e ASA. Max 600 mm/s."
+  - nome: Bambu Lab X2D
+    area_stampa_mm: [256, 256, 260]
     costo_orario: 1.80
     velocita: 1.5
     chiusa: true
-    note: "Stampante chiusa: adatta anche ad ABS e ASA."
-  - nome: Prusa MK4S
-    area_stampa_mm: [250, 210, 220]
-    costo_orario: 1.60
-    velocita: 1.2
+    note: "Doppio ugello, camera riscaldata a 65 °C."
+  - nome: Bambu Lab H2S
+    area_stampa_mm: [340, 320, 340]
+    costo_orario: 2.20
+    velocita: 1.6
+    chiusa: true
+    note: "Grande formato, camera riscaldata a 65 °C. Max 1000 mm/s."
+  - nome: Bambu Lab H2D
+    area_stampa_mm: [350, 320, 325]
+    costo_orario: 2.60
+    velocita: 1.6
+    chiusa: true
+    note: "Doppio ugello, camera riscaldata a 65 °C. Max 1000 mm/s."
+  - nome: Bambu Lab H2D Pro
+    area_stampa_mm: [350, 320, 325]
+    costo_orario: 3.00
+    velocita: 1.6
+    chiusa: true
+    note: "Versione professionale della H2D, camera riscaldata a 65 °C."
+  - nome: Bambu Lab H2C
+    area_stampa_mm: [330, 320, 325]
+    costo_orario: 2.80
+    velocita: 1.6
+    chiusa: true
+    note: "Sistema multi-materiale Vortek, camera riscaldata a 65 °C."
+  - nome: Bambu Lab H3C
+    area_stampa_mm: [330, 320, 325]
+    costo_orario: 3.20
+    velocita: 1.7
+    chiusa: true
+    note: "Cambio utensile a 9 teste, camera riscaldata a 65 °C. Max 1400 mm/s."
+  - nome: Bambu Lab P1P
+    area_stampa_mm: [256, 256, 256]
+    costo_orario: 1.30
+    velocita: 1.4
     chiusa: false
     materiali: [PLA, PETG, TPU]
-  - nome: Creality Ender 3 V3 SE
-    area_stampa_mm: [220, 220, 250]
-    costo_orario: 1.00
-    velocita: 1.0
-    chiusa: false
-    materiali: [PLA, PETG]
+    note: "Telaio aperto. Fuori produzione."
+  - nome: Bambu Lab P1S
+    area_stampa_mm: [256, 256, 256]
+    costo_orario: 1.50
+    velocita: 1.4
+    chiusa: true
+    note: "Chiusa, adatta anche ad ABS e ASA. Fuori produzione."
+  - nome: Bambu Lab X1 Carbon
+    area_stampa_mm: [256, 256, 256]
+    costo_orario: 1.80
+    velocita: 1.4
+    chiusa: true
+    note: "Chiusa, adatta anche ad ABS e ASA. Fuori produzione."
+  - nome: Bambu Lab X1E
+    area_stampa_mm: [256, 256, 256]
+    costo_orario: 2.20
+    velocita: 1.4
+    chiusa: true
+    note: "Camera riscaldata, per materiali tecnici. Fuori produzione."
