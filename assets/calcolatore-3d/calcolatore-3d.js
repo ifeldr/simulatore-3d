@@ -87,7 +87,8 @@
         if (!area || area.some(function (x) { return x === undefined; })) area = CONFIG.buildVolume.slice();
         var rate = n(r.costo_orario, 0, 1000), sp = n(r.velocita, 0.1, 10), pw = n(r.potenza_w, 0, 10000);
         return {
-          id: 'p' + (i + 1), name: String(r.nome), buildVolume: area,
+          id: 'p' + (i + 1), model: String(r.nome), brand: r.marca ? String(r.marca) : 'Altre',
+          name: (r.marca ? String(r.marca) + ' ' : '') + String(r.nome), buildVolume: area,
           machineRate: rate === undefined ? CONFIG.machineRate : rate,
           speed: sp === undefined ? 1 : sp,
           powerW: pw === undefined ? CONFIG.powerW : pw,
@@ -156,7 +157,7 @@
     plate: $('c3d-plate'), canvas: $('c3d-canvas'), drop: $('c3d-drop'), pick: $('c3d-pick'),
     file: $('c3d-file'), overlay: $('c3d-overlay'), fname: $('c3d-fname'), dims: $('c3d-dims'),
     hint: $('c3d-hint'), msg: $('c3d-msg'), listWrap: $('c3d-list-wrap'), list: $('c3d-files'), add: $('c3d-add'),
-    printer: $('c3d-printer'), energy: $('c3d-energy'), printerField: $('c3d-printer-field'), printerInfo: $('c3d-printer-info'),
+    printer: $('c3d-printer'), brand: $('c3d-brand'), energy: $('c3d-energy'), printerField: $('c3d-printer-field'), printerInfo: $('c3d-printer-info'),
     material: $('c3d-material'), applyAll: $('c3d-apply-all'), quality: $('c3d-quality'), infill: $('c3d-infill'),
     infillOut: $('c3d-infill-out'), unit: $('c3d-unit'), supports: $('c3d-supports'),
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
@@ -182,12 +183,33 @@
   });
 
   // ---------- Stampante ----------
-  if (CONFIG.printers.length) {
-    CONFIG.printers.forEach(function (p) {
-      var o = document.createElement('option'); o.value = p.id; o.textContent = p.name;
-      if (p.default) o.selected = true;
-      el.printer.appendChild(o);
+  // Due menu collegati: la marca filtra i modelli; il valore del menu modello è l'id della stampante.
+  function brands() {
+    var out = [];
+    CONFIG.printers.forEach(function (p) { if (out.indexOf(p.brand) < 0) out.push(p.brand); });
+    return out;
+  }
+  function fillBrands(brandSel) {
+    brands().forEach(function (b) {
+      var o = document.createElement('option'); o.value = b; o.textContent = b; brandSel.appendChild(o);
     });
+  }
+  function fillModels(brandSel, modelSel, keepId) {
+    modelSel.innerHTML = '';
+    CONFIG.printers.forEach(function (p) {
+      if (p.brand !== brandSel.value) return;
+      var o = document.createElement('option'); o.value = p.id; o.textContent = p.model; modelSel.appendChild(o);
+    });
+    if (keepId && modelSel.querySelector('option[value="' + keepId + '"]')) modelSel.value = keepId;
+  }
+  function setPicker(brandSel, modelSel, id) {
+    var p = CONFIG.printers.filter(function (x) { return x.id === id; })[0] || CONFIG.printers[0];
+    brandSel.value = p.brand; fillModels(brandSel, modelSel, p.id);
+  }
+  if (CONFIG.printers.length) {
+    fillBrands(el.brand);
+    var pDef = CONFIG.printers.filter(function (p) { return p.default; })[0] || CONFIG.printers[0];
+    setPicker(el.brand, el.printer, pDef.id);
     el.printerField.hidden = false;
   }
   // Stampante per id; senza id restituisce quella scelta per i nuovi file
@@ -497,23 +519,25 @@
     supLabel.appendChild(supBox); supLabel.appendChild(document.createTextNode('Supporti'));
     var supHidden = document.createElement('span'); supHidden.className = 'c3d-vh'; supHidden.textContent = ' (' + m.name + ')';
     supLabel.appendChild(supHidden);
-    var prSel = null;
+    var prSel = null, brSel = null;
     if (CONFIG.printers.length) {
       var prLabel = document.createElement('label');
       prLabel.appendChild(document.createTextNode('Stampante'));
       var prHidden = document.createElement('span'); prHidden.className = 'c3d-vh'; prHidden.textContent = ' (' + m.name + ')';
       prLabel.appendChild(prHidden);
+      brSel = document.createElement('select'); brSel.className = 'c3d-file-brand';
+      brSel.setAttribute('aria-label', 'Marca della stampante (' + m.name + ')');
       prSel = document.createElement('select'); prSel.className = 'c3d-file-printer';
-      CONFIG.printers.forEach(function (x) {
-        var op = document.createElement('option'); op.value = x.id; op.textContent = x.name; prSel.appendChild(op);
-      });
-      prSel.value = m.printerId;
-      prSel.addEventListener('change', function () {
+      prSel.setAttribute('aria-label', 'Modello della stampante (' + m.name + ')');
+      fillBrands(brSel); setPicker(brSel, prSel, m.printerId);
+      var onPrinter = function () {
         m.printerId = prSel.value; refreshMaterialOptions();
         if (m.id === selectedId) updateGrid();
         update();
-      });
-      prLabel.appendChild(prSel);
+      };
+      brSel.addEventListener('change', function () { fillModels(brSel, prSel); onPrinter(); });
+      prSel.addEventListener('change', onPrinter);
+      prLabel.appendChild(brSel); prLabel.appendChild(prSel);
       extra.appendChild(prLabel);
     }
     extra.appendChild(infLabel); extra.appendChild(supLabel);
@@ -525,7 +549,7 @@
 
     li.appendChild(pick); li.appendChild(matWrap); li.appendChild(qty.wrap); li.appendChild(scale.wrap); li.appendChild(rm); li.appendChild(extra);
     el.list.appendChild(li);
-    m.row = { li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, infSel: infSel, supBox: supBox, swatch: sw };
+    m.row = { li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, brSel: brSel, infSel: infSel, supBox: supBox, swatch: sw };
   }
 
   function markActive() {
@@ -616,12 +640,13 @@
   el.material.addEventListener('change', update);
   // La stampante in alto vale per i nuovi file: quelli già caricati mantengono la loro (vedi "Applica a tutti")
   if (el.printer) el.printer.addEventListener('change', function () { refreshMaterialOptions(); update(); });
+  if (el.brand) el.brand.addEventListener('change', function () { fillModels(el.brand, el.printer); refreshMaterialOptions(); update(); });
   el.applyAll.addEventListener('click', function () {
     models.forEach(function (m) {
       m.materialId = el.material.value; m.row.matSel.value = m.materialId;
       m.infill = +el.infill.value; m.row.infSel.value = m.infill;
       m.supports = el.supports.checked; m.row.supBox.checked = m.supports;
-      if (m.row.prSel) { m.printerId = el.printer.value; m.row.prSel.value = m.printerId; }
+      if (m.row.prSel) { m.printerId = el.printer.value; setPicker(m.row.brSel, m.row.prSel, m.printerId); }
     });
     refreshMaterialOptions(); updateGrid();
     update();
