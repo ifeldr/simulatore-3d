@@ -6,8 +6,14 @@ all'indirizzo https://ifeldr.github.io/simulatore-3d/.
 
 ## Modificare prezzi e parametri
 
-Apri `_data/calcolatore_3d.yml`, cambia i valori (email, costi, materiali, qualità, sconti)
+Apri `_data/calcolatore_3d.yml`, cambia i valori (email, costi, materiali, qualità, sconti, stampanti)
 e fai commit: GitHub Pages aggiorna la pagina in un paio di minuti.
+
+## Stampanti
+
+In fondo a `_data/calcolatore_3d.yml` c'è la lista `stampanti`: ognuna ha area di stampa,
+costo orario, velocità e materiali supportati. Il cliente la sceglie da un menu e il prezzo
+si ricalcola. Le stampanti presenti sono esempi: tieni solo le tue e correggi i valori.
 
 ## File
 

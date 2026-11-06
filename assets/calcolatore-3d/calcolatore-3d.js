@@ -1,4 +1,4 @@
-/* Calcolatore costo stampa 3D da file STL, v1.4 per Jekyll / GitHub Pages */
+/* Calcolatore costo stampa 3D da file STL, v1.5 per Jekyll / GitHub Pages (con scelta della stampante) */
 (function () {
   'use strict';
 
@@ -20,6 +20,7 @@
     heatUpMinutes: 5,          // riscaldamento e preparazione per lavoro
     layerOverheadSec: 2,       // secondi persi a ogni cambio strato
     supports: { material: 0.15, time: 0.10 }, // maggiorazione con supporti
+    printers: [],              // stampanti selezionabili (da _data/calcolatore_3d.yml); vuoto = nessun menu
     quantityDiscounts: [       // sconto a partire da N pezzi
       { min: 10, pct: 0.05 },
       { min: 50, pct: 0.10 }
@@ -74,6 +75,31 @@
     set(CONFIG.supports, 'material', pct(d.supporti_materiale_percento, 500));
     set(CONFIG.supports, 'time', pct(d.supporti_tempo_percento, 500));
 
+    if (Array.isArray(d.stampanti)) {
+      var ps = d.stampanti.map(function (r, i) {
+        if (!r || r.nome === undefined || r.nome === null || r.nome === '') return null;
+        var area = Array.isArray(r.area_stampa_mm) && r.area_stampa_mm.length === 3
+          ? r.area_stampa_mm.map(function (x) { return n(x, 1, 5000); }) : null;
+        if (!area || area.some(function (x) { return x === undefined; })) area = CONFIG.buildVolume.slice();
+        var rate = n(r.costo_orario, 0, 1000), sp = n(r.velocita, 0.1, 10);
+        return {
+          id: 'p' + (i + 1), name: String(r.nome), buildVolume: area,
+          machineRate: rate === undefined ? CONFIG.machineRate : rate,
+          speed: sp === undefined ? 1 : sp,
+          enclosed: r.chiusa === true,
+          materials: Array.isArray(r.materiali) && r.materiali.length ? r.materiali.map(function (x) { return String(x); }) : null,
+          note: typeof r.note === 'string' ? r.note : '',
+          default: r.predefinita === true
+        };
+      }).filter(Boolean);
+      if (ps.length) {
+        var pf = false;
+        ps.forEach(function (x) { if (x.default && !pf) pf = true; else x.default = false; });
+        if (!pf) ps[0].default = true;
+        CONFIG.printers = ps;
+      }
+    }
+
     if (Array.isArray(d.sconti_quantita)) {
       CONFIG.quantityDiscounts = d.sconti_quantita.map(function (r) {
         var min = n(r && r.da_pezzi, 1, 100000), p = pct(r && r.sconto_percento, 100);
@@ -125,6 +151,7 @@
     plate: $('c3d-plate'), canvas: $('c3d-canvas'), drop: $('c3d-drop'), pick: $('c3d-pick'),
     file: $('c3d-file'), overlay: $('c3d-overlay'), fname: $('c3d-fname'), dims: $('c3d-dims'),
     hint: $('c3d-hint'), msg: $('c3d-msg'), listWrap: $('c3d-list-wrap'), list: $('c3d-files'), add: $('c3d-add'),
+    printer: $('c3d-printer'), printerField: $('c3d-printer-field'), printerInfo: $('c3d-printer-info'),
     material: $('c3d-material'), applyAll: $('c3d-apply-all'), quality: $('c3d-quality'), infill: $('c3d-infill'),
     infillOut: $('c3d-infill-out'), unit: $('c3d-unit'), supports: $('c3d-supports'),
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
@@ -137,7 +164,7 @@
 
   // ---------- Opzioni dinamiche ----------
   CONFIG.materials.forEach(function (m) {
-    var o = document.createElement('option'); o.value = m.id; o.textContent = m.name; el.material.appendChild(o);
+    var o = document.createElement('option'); o.value = m.id; o.textContent = m.name; o.setAttribute('data-nome', m.name); el.material.appendChild(o);
   });
   CONFIG.qualities.forEach(function (q) {
     var id = 'c3d-q-' + q.id;
@@ -148,6 +175,50 @@
     label.appendChild(document.createTextNode(q.label)); label.appendChild(small);
     el.quality.appendChild(input); el.quality.appendChild(label);
   });
+
+  // ---------- Stampante ----------
+  if (CONFIG.printers.length) {
+    CONFIG.printers.forEach(function (p) {
+      var o = document.createElement('option'); o.value = p.id; o.textContent = p.name;
+      if (p.default) o.selected = true;
+      el.printer.appendChild(o);
+    });
+    el.printerField.hidden = false;
+  }
+  function printer() {
+    if (!CONFIG.printers.length) return null;
+    return CONFIG.printers.filter(function (p) { return p.id === el.printer.value; })[0] || CONFIG.printers[0];
+  }
+  function buildVolume() { var p = printer(); return p ? p.buildVolume : CONFIG.buildVolume; }
+  function machineRate() { var p = printer(); return p ? p.machineRate : CONFIG.machineRate; }
+  function printerSpeed() { var p = printer(); return p ? p.speed : 1; }
+  // Un materiale è stampabile se la stampante non ha un elenco o se il nome compare nell'elenco
+  // (basta la prima parola: "ASA" vale anche per "ASA (per esterni)").
+  function primaParola(t) { return String(t).trim().split(/[\s(]/)[0].toLowerCase(); }
+  function materialAllowed(mt) {
+    var p = printer();
+    if (!p || !p.materials) return true;
+    return p.materials.some(function (x) { return primaParola(x) === primaParola(mt.name); });
+  }
+  function refreshMaterialOptions() {
+    var sels = [el.material].concat(models.map(function (m) { return m.row.matSel; }));
+    sels.forEach(function (sel) {
+      Array.prototype.forEach.call(sel.options, function (op) {
+        var ok = materialAllowed(matById(op.value));
+        op.disabled = !ok;
+        op.textContent = op.getAttribute('data-nome') + (ok ? '' : (sel === el.material ? ' (non disponibile)' : ' ✗'));
+      });
+    });
+    if (!materialAllowed(matById(el.material.value))) {
+      var first = CONFIG.materials.filter(materialAllowed)[0];
+      if (first) el.material.value = first.id;
+    }
+    var p = printer();
+    if (p) {
+      var b = p.buildVolume.map(function (x) { return num0.format(x); }).join(' × ');
+      el.printerInfo.textContent = 'Area di stampa ' + b + ' mm' + (p.enclosed ? ', stampante chiusa' : '') + (p.note ? '. ' + p.note : '');
+    }
+  }
 
   function setMsg(text, kind) {
     el.msg.textContent = text || '';
@@ -244,16 +315,16 @@
     var printed = shell + (V - shell) * m.infill / 100;
     if (m.supports) printed *= 1 + CONFIG.supports.material;
     var grams = printed / 1000 * mt.density;
-    var sec = printed / (o.quality.flow * mt.speed) + (size[2] / o.quality.layer) * CONFIG.layerOverheadSec;
+    var sec = printed / (o.quality.flow * mt.speed * printerSpeed()) + (size[2] / o.quality.layer) * CONFIG.layerOverheadSec;
     if (m.supports) sec *= 1 + CONFIG.supports.time;
     var hours = sec / 3600;
     var k = 1 + CONFIG.markup;
     var a = size.slice().sort(function (x, y) { return x - y; });
-    var b = CONFIG.buildVolume.slice().sort(function (x, y) { return x - y; });
+    var b = buildVolume().slice().sort(function (x, y) { return x - y; });
     return {
       V: V, size: size, grams: grams, hours: hours,
       mat: grams / 1000 * mt.pricePerKg * (1 + CONFIG.waste) * k,
-      mach: hours * CONFIG.machineRate * k,
+      mach: hours * machineRate() * k,
       fits: a[0] <= b[0] && a[1] <= b[1] && a[2] <= b[2]
     };
   }
@@ -275,6 +346,7 @@
 
     var o = globals();
     var matBy = {}, matOrder = [];
+    var wrongMat = 0;
     var pieces = 0, mat = 0, mach = 0, grams = 0, hours = 0, tooBig = 0, results = [];
     models.forEach(function (m) { pieces += m.qty; });
     var disc = 0;
@@ -289,7 +361,10 @@
       if (!r.fits) tooBig++;
       var piecePrice = (r.mat + r.mach) * (1 - disc) * (1 + CONFIG.vat);
       m.row.meta.textContent = fmtSize(r.size) + ', ' + num1.format(r.grams) + ' g, ' + money.format(piecePrice) + ' a pezzo';
-      var warn = !r.fits ? 'Supera l\'area di stampa: riduci la scala o lo dividiamo in parti.' : (m.unitHint || '');
+      var warn = !r.fits ? 'Supera l\'area di stampa: riduci la scala o lo dividiamo in parti.'
+        : !materialAllowed(matById(m.materialId)) ? matById(m.materialId).name + ' non si stampa su questa stampante: scegli un altro materiale.'
+        : (m.unitHint || '');
+      if (!materialAllowed(matById(m.materialId))) wrongMat++;
       m.row.warn.textContent = warn; m.row.warn.hidden = !warn;
       m.r = r;
       m.row.swatch.style.background = matById(m.materialId).color;
@@ -326,8 +401,10 @@
     el.total.textContent = money.format(total);
     el.summary.textContent = models.length === 1 ? '1 file' : models.length + ' file';
 
-    if (tooBig) setMsg(tooBig === 1 ? 'Un file supera l\'area di stampa (' + CONFIG.buildVolume.join(' × ') + ' mm).'
-      : tooBig + ' file superano l\'area di stampa (' + CONFIG.buildVolume.join(' × ') + ' mm).', 'warn');
+    if (wrongMat) setMsg(wrongMat === 1 ? 'Un file usa un materiale che questa stampante non supporta.'
+      : wrongMat + ' file usano materiali che questa stampante non supporta.', 'warn');
+    else if (tooBig) setMsg(tooBig === 1 ? 'Un file supera l\'area di stampa (' + buildVolume().join(' × ') + ' mm).'
+      : tooBig + ' file superano l\'area di stampa (' + buildVolume().join(' × ') + ' mm).', 'warn');
     else if (notice) setMsg(notice, 'error');
     else if (!busy) setMsg('');
 
@@ -366,6 +443,7 @@
     var matSel = document.createElement('select');
     CONFIG.materials.forEach(function (x) {
       var op = document.createElement('option'); op.value = x.id; op.textContent = x.name.replace(/\s*\(.*\)$/, ''); op.title = x.name;
+      op.setAttribute('data-nome', op.textContent);
       matSel.appendChild(op);
     });
     matSel.value = m.materialId;
@@ -466,7 +544,7 @@
           : maxDim > 2000 ? 'Supera i 2 metri: controlla l\'unità dei file.' : '';
         var m = { id: nextId++, name: file.name, pos: pos, stats: stats, qty: 1, scale: 100, materialId: el.material.value,
                   infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
-        models.push(m); addRow(m);
+        models.push(m); addRow(m); refreshMaterialOptions();
         if (selectedId === null) { selectedId = m.id; markActive(); update(); showPreview(); }
         else update();
       } catch (e) {
@@ -492,6 +570,7 @@
   });
 
   el.material.addEventListener('change', update);
+  if (el.printer) el.printer.addEventListener('change', function () { refreshMaterialOptions(); updateGrid(); update(); });
   el.applyAll.addEventListener('click', function () {
     models.forEach(function (m) {
       m.materialId = el.material.value; m.row.matSel.value = m.materialId;
@@ -518,10 +597,12 @@
       lines.push((i + 1) + '. ' + m.name + ': ' + matById(m.materialId).name + ', ' + m.qty + ' pz, riempimento ' + m.infill + '%, ' + (m.supports ? 'con' : 'senza') + ' supporti, scala ' + m.scale + '%, ' + fmtSize(m.r.size) + ', ' + num1.format(m.r.grams) + ' g a pezzo');
     });
     lines.push('',
+      (printer() ? 'Stampante: ' + printer().name : null),
       'Qualità: ' + o.quality.label + ' (' + o.quality.layer + ' mm)',
       'Pezzi totali: ' + last.pieces,
       'Prezzo stimato: ' + money.format(last.total) + ' IVA inclusa',
       '', 'Nome:', 'Telefono:');
+    lines = lines.filter(function (x) { return x !== null; });
     window.location.href = 'mailto:' + CONFIG.contactEmail +
       '?subject=' + encodeURIComponent('Preventivo stampa 3D: ' + models.length + (models.length === 1 ? ' file' : ' file')) +
       '&body=' + encodeURIComponent(lines.join('\n'));
@@ -564,10 +645,10 @@
     scene.add(new T.HemisphereLight(0xffffff, 0x2a2f38, 0.55));
     var key = new T.DirectionalLight(0xffffff, 0.9); key.position.set(0.8, 1.2, 0.6);
     camera.add(key); scene.add(camera);
-    scene.add(new T.GridHelper(CONFIG.buildVolume[0], Math.round(CONFIG.buildVolume[0] / 10), 0x5a6270, 0x3a404a));
     var group = new T.Group(); scene.add(group);
     view = { T: T, renderer: renderer, scene: scene, camera: camera, group: group, mesh: null, modelId: null,
-             theta: -0.75, phi: 1.05, radius: 100, target: new T.Vector3(), s: 0 };
+             theta: -0.75, phi: 1.05, radius: 100, target: new T.Vector3(), s: 0, grid: null };
+    updateGrid();
 
     var drag = null;
     el.canvas.addEventListener('pointerdown', function (e) {
@@ -587,6 +668,15 @@
 
     if (window.ResizeObserver) new ResizeObserver(resize).observe(el.plate);
     else window.addEventListener('resize', resize);
+  }
+
+  // Griglia del piatto con la misura della stampante scelta
+  function updateGrid() {
+    if (!view) return;
+    var T = view.T, b = buildVolume(), lato = Math.max(b[0], b[1]);
+    if (view.grid) { view.scene.remove(view.grid); view.grid.geometry.dispose(); }
+    view.grid = new T.GridHelper(lato, Math.max(1, Math.round(lato / 10)), 0x5a6270, 0x3a404a);
+    view.scene.add(view.grid); render();
   }
 
   function clearMesh() {
@@ -649,5 +739,6 @@
     raf = requestAnimationFrame(function () { raf = 0; view.renderer.render(view.scene, view.camera); });
   }
 
+  refreshMaterialOptions();
   update();
 })();
