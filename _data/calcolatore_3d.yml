@@ -94,9 +94,10 @@ cambio_strato_secondi: 2
 
 # ---------- Stampanti ----------
 # Il cliente sceglie marca e modello della stampante e il simulatore usa i suoi parametri.
-# Area di stampa, telaio aperto o chiuso e note tecniche vengono dal sito e dal blog ufficiali
-# di Bambu Lab (novembre 2026); per le stampanti a doppio ugello è indicata l'area massima.
-# Costo orario e velocità sono stime: adattali alle tue macchine e togli quelle che non hai.
+# Area di stampa, telaio aperto o chiuso e note tecniche vengono dai siti ufficiali di Bambu Lab,
+# Prusa, Creality, Elegoo e Anycubic (novembre 2026); per le stampanti a più ugelli è indicata
+# l'area massima. Le stampanti a telaio aperto accettano solo PLA, PETG e TPU.
+# Costo orario, consumo (potenza_w) e velocità sono stime: adattali alle tue macchine.
 #   marca, nome:   il cliente sceglie prima la marca, poi il modello (nome)
 #   area_stampa_mm: X, Y, Z in mm (i modelli più grandi vengono segnalati)
 #   costo_orario:   € per ora di stampa su questa macchina (usura, ammortamento; l'energia è a parte)
@@ -227,3 +228,282 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "Camera riscaldata, per materiali tecnici. Fuori produzione."
+  - marca: Prusa
+    nome: MINI+
+    area_stampa_mm: [180, 180, 180]
+    costo_orario: 0.90
+    potenza_w: 60
+    velocita: 0.9
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto, formato compatto."
+  - marca: Prusa
+    nome: MK4S
+    area_stampa_mm: [250, 210, 220]
+    costo_orario: 1.30
+    potenza_w: 90
+    velocita: 1.2
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto."
+  - marca: Prusa
+    nome: CORE One+
+    area_stampa_mm: [250, 220, 270]
+    costo_orario: 1.60
+    potenza_w: 110
+    velocita: 1.4
+    chiusa: true
+    note: "CoreXY chiusa, camera fino a 55 °C."
+  - marca: Prusa
+    nome: CORE One L
+    area_stampa_mm: [300, 300, 330]
+    costo_orario: 2.20
+    potenza_w: 160
+    velocita: 1.4
+    chiusa: true
+    note: "CoreXY chiusa grande formato, camera fino a 60 °C."
+  - marca: Prusa
+    nome: XL
+    area_stampa_mm: [360, 360, 360]
+    costo_orario: 2.50
+    potenza_w: 200
+    velocita: 1.2
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Grande formato, fino a 5 teste (cambio utensile)."
+  - marca: Creality
+    nome: Ender-3 V3 SE
+    area_stampa_mm: [220, 220, 250]
+    costo_orario: 0.70
+    potenza_w: 90
+    velocita: 0.8
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 250 mm/s."
+  - marca: Creality
+    nome: Ender-3 V3 KE
+    area_stampa_mm: [220, 220, 240]
+    costo_orario: 0.80
+    potenza_w: 100
+    velocita: 1.2
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
+  - marca: Creality
+    nome: Ender-3 V3
+    area_stampa_mm: [220, 220, 250]
+    costo_orario: 0.90
+    potenza_w: 110
+    velocita: 1.5
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "CoreXZ a telaio aperto. Max 600 mm/s."
+  - marca: Creality
+    nome: Ender-3 V3 Neo
+    area_stampa_mm: [220, 220, 220]
+    costo_orario: 0.80
+    potenza_w: 100
+    velocita: 1.2
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
+  - marca: Creality
+    nome: Ender-3 V3 Mega
+    area_stampa_mm: [420, 420, 420]
+    costo_orario: 1.30
+    potenza_w: 250
+    velocita: 1.2
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Grande formato a telaio aperto. Max 500 mm/s."
+  - marca: Creality
+    nome: Ender-5 Max
+    area_stampa_mm: [400, 400, 400]
+    costo_orario: 1.40
+    potenza_w: 220
+    velocita: 1.5
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Grande formato, chiusura opzionale. Max 700 mm/s."
+  - marca: Creality
+    nome: Hi
+    area_stampa_mm: [260, 260, 300]
+    costo_orario: 1.00
+    potenza_w: 120
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
+  - marca: Creality
+    nome: SPARKX i7
+    area_stampa_mm: [260, 260, 255]
+    costo_orario: 0.90
+    potenza_w: 110
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto."
+  - marca: Creality
+    nome: SPARKX i8
+    area_stampa_mm: [260, 260, 255]
+    costo_orario: 0.90
+    potenza_w: 110
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
+  - marca: Creality
+    nome: K2 SE
+    area_stampa_mm: [220, 215, 245]
+    costo_orario: 1.00
+    potenza_w: 110
+    velocita: 1.4
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "CoreXY a telaio aperto. Max 500 mm/s."
+  - marca: Creality
+    nome: K2
+    area_stampa_mm: [260, 260, 260]
+    costo_orario: 1.40
+    potenza_w: 140
+    velocita: 1.5
+    chiusa: true
+    note: "CoreXY chiusa. Max 600 mm/s."
+  - marca: Creality
+    nome: K2 Pro
+    area_stampa_mm: [300, 300, 300]
+    costo_orario: 1.80
+    potenza_w: 180
+    velocita: 1.5
+    chiusa: true
+    note: "CoreXY chiusa, camera riscaldata a 60 °C."
+  - marca: Creality
+    nome: K2 Plus
+    area_stampa_mm: [350, 350, 350]
+    costo_orario: 2.20
+    potenza_w: 220
+    velocita: 1.5
+    chiusa: true
+    note: "CoreXY chiusa, camera riscaldata a 60 °C."
+  - marca: Creality
+    nome: K3
+    area_stampa_mm: [260, 260, 260]
+    costo_orario: 1.50
+    potenza_w: 140
+    velocita: 1.4
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Cambio ugello multi-materiale; ABS e ASA solo con la copertura superiore."
+  - marca: Elegoo
+    nome: Neptune 4
+    area_stampa_mm: [225, 225, 265]
+    costo_orario: 0.80
+    potenza_w: 110
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
+  - marca: Elegoo
+    nome: Neptune 4 Pro
+    area_stampa_mm: [225, 225, 265]
+    costo_orario: 0.90
+    potenza_w: 110
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 500 mm/s."
+  - marca: Elegoo
+    nome: Neptune 4 Plus
+    area_stampa_mm: [320, 320, 385]
+    costo_orario: 1.10
+    potenza_w: 180
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Grande formato a telaio aperto. Max 500 mm/s."
+  - marca: Elegoo
+    nome: Neptune 4 Max
+    area_stampa_mm: [420, 420, 480]
+    costo_orario: 1.30
+    potenza_w: 250
+    velocita: 1.3
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Grande formato a telaio aperto. Max 500 mm/s."
+  - marca: Elegoo
+    nome: Centauri Carbon
+    area_stampa_mm: [256, 256, 256]
+    costo_orario: 1.20
+    potenza_w: 130
+    velocita: 1.4
+    chiusa: true
+    note: "CoreXY chiusa. Max 500 mm/s."
+  - marca: Elegoo
+    nome: Centauri Carbon 2
+    area_stampa_mm: [256, 256, 256]
+    costo_orario: 1.30
+    potenza_w: 130
+    velocita: 1.4
+    chiusa: true
+    note: "CoreXY chiusa, multi-materiale, ugello fino a 350 °C."
+  - marca: Elegoo
+    nome: OrangeStorm Giga
+    area_stampa_mm: [800, 800, 1000]
+    costo_orario: 3.50
+    potenza_w: 600
+    velocita: 1.0
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Formato gigante, multi-ugello. Max 300 mm/s."
+  - marca: Anycubic
+    nome: Kobra 3 V2
+    area_stampa_mm: [255, 255, 260]
+    costo_orario: 0.90
+    potenza_w: 110
+    velocita: 1.5
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Telaio aperto. Max 600 mm/s."
+  - marca: Anycubic
+    nome: Kobra 3 Max V2
+    area_stampa_mm: [420, 420, 500]
+    costo_orario: 1.30
+    potenza_w: 250
+    velocita: 1.4
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Grande formato a telaio aperto. Max 600 mm/s."
+  - marca: Anycubic
+    nome: Kobra 4
+    area_stampa_mm: [260, 260, 260]
+    costo_orario: 1.00
+    potenza_w: 120
+    velocita: 1.5
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Max 600 mm/s."
+  - marca: Anycubic
+    nome: Kobra X
+    area_stampa_mm: [260, 260, 260]
+    costo_orario: 1.20
+    potenza_w: 130
+    velocita: 1.5
+    chiusa: false
+    materiali: [PLA, PETG, TPU]
+    note: "Multi-colore. Max 600 mm/s."
+  - marca: Anycubic
+    nome: Kobra S1
+    area_stampa_mm: [250, 250, 250]
+    costo_orario: 1.30
+    potenza_w: 130
+    velocita: 1.5
+    chiusa: true
+    note: "CoreXY chiusa. Max 600 mm/s."
+  - marca: Anycubic
+    nome: Kobra S1 Max
+    area_stampa_mm: [350, 350, 350]
+    costo_orario: 2.00
+    potenza_w: 220
+    velocita: 1.5
+    chiusa: true
+    note: "CoreXY chiusa, camera riscaldata a 65 °C."
