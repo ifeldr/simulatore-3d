@@ -7,23 +7,24 @@
 
 email_preventivi: l0r3nz0g4rb1@gmail.com   # dove arrivano le richieste di preventivo
 
-# ---------- Prezzi ----------
-costo_orario: 1.80          # € per ora di stampa (usura, ammortamento), usato solo se la lista "stampanti" è vuota
+# ---------- Costi ----------
+# Il simulatore calcola il costo reale di stampa: materiale, usura della stampante, energia
+# e, per la resina, lavaggio e polimerizzazione. Le voci di vendita qui sotto sono a zero.
+costo_orario: 0.30          # € per ora di usura della stampante, usato solo se la lista "stampanti" è vuota
 costo_energia_kwh: 0.30     # € per kWh: valore proposto nel campo "Energia" della pagina
 potenza_w: 120              # consumo medio in stampa (W), usato solo se la lista "stampanti" è vuota
-preparazione_ordine: 5.00   # € fissi per ordine (slicing, preparazione, imballo)
-ordine_minimo: 10.00        # € imponibile minimo per ordine
-ricarico_percento: 30       # ricarico su materiale e tempo di stampa
+preparazione_ordine: 0      # € fissi per stampa (0 = nessuno)
+ordine_minimo: 0            # importo minimo (0 = nessuno)
+ricarico_percento: 0        # ricarico su materiale e usura (0 = costo reale)
 scarto_percento: 5          # materiale perso in spurghi, skirt e prove
-iva_percento: 22
+iva_percento: 0             # 0 = nessuna IVA
 
-# ---------- Sconti quantità (sul totale dei pezzi dell'ordine) ----------
-# Vale la soglia più alta raggiunta. Per non applicare sconti: sconti_quantita: []
-sconti_quantita:
-  - da_pezzi: 10
-    sconto_percento: 5
-  - da_pezzi: 50
-    sconto_percento: 10
+# ---------- Sconti quantità ----------
+# Servono solo per vendere: per aggiungerli, vedi l'esempio commentato.
+# sconti_quantita:
+#   - da_pezzi: 10
+#     sconto_percento: 5
+sconti_quantita: []
 
 # ---------- Materiali ----------
 # densita in g/cm³, prezzo_kg in €/kg
@@ -140,10 +141,11 @@ cambio_strato_secondi: 2
 # Area di stampa, telaio aperto o chiuso e note tecniche vengono dai siti ufficiali di Bambu Lab,
 # Prusa, Creality, Elegoo e Anycubic (novembre 2026); per le stampanti a più ugelli è indicata
 # l'area massima. Le stampanti a telaio aperto accettano solo PLA, PETG e TPU.
-# Costo orario, consumo (potenza_w) e velocità sono stime: adattali alle tue macchine.
+# Costo orario (usura), consumo (potenza_w) e velocità sono stime: adattali alle tue macchine.
 #   marca, nome:   il cliente sceglie prima la marca, poi il modello (nome)
 #   area_stampa_mm: X, Y, Z in mm (i modelli più grandi vengono segnalati)
-#   costo_orario:   € per ora di stampa su questa macchina (usura, ammortamento; l'energia è a parte)
+#   costo_orario:   € per ora di usura della macchina (ugelli, piatti, cinghie, pellicole FEP,
+#                   eventuale ammortamento); l'energia è a parte
 #   potenza_w:      consumo medio durante la stampa in watt (stima), per calcolare l'energia
 #   velocita:       quanto è veloce rispetto alla portata delle qualità (1 = uguale, 1.5 = 50% più veloce);
 #                   stimata da velocità e accelerazione massime dichiarate
@@ -161,7 +163,7 @@ stampanti:
   - marca: Bambu Lab
     nome: A1 mini
     area_stampa_mm: [180, 180, 180]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 80
     velocita: 1.3
     chiusa: false
@@ -170,7 +172,7 @@ stampanti:
   - marca: Bambu Lab
     nome: A1
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.20
+    costo_orario: 0.25
     potenza_w: 95
     velocita: 1.3
     chiusa: false
@@ -180,7 +182,7 @@ stampanti:
   - marca: Bambu Lab
     nome: A2L
     area_stampa_mm: [330, 320, 325]
-    costo_orario: 1.40
+    costo_orario: 0.30
     potenza_w: 120
     velocita: 1.3
     chiusa: false
@@ -189,7 +191,7 @@ stampanti:
   - marca: Bambu Lab
     nome: P2S
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.60
+    costo_orario: 0.30
     potenza_w: 130
     velocita: 1.5
     chiusa: true
@@ -197,7 +199,7 @@ stampanti:
   - marca: Bambu Lab
     nome: X2D
     area_stampa_mm: [256, 256, 260]
-    costo_orario: 1.80
+    costo_orario: 0.35
     potenza_w: 150
     velocita: 1.5
     chiusa: true
@@ -205,7 +207,7 @@ stampanti:
   - marca: Bambu Lab
     nome: H2S
     area_stampa_mm: [340, 320, 340]
-    costo_orario: 2.20
+    costo_orario: 0.45
     potenza_w: 200
     velocita: 1.6
     chiusa: true
@@ -213,7 +215,7 @@ stampanti:
   - marca: Bambu Lab
     nome: H2D
     area_stampa_mm: [350, 320, 325]
-    costo_orario: 2.60
+    costo_orario: 0.50
     potenza_w: 220
     velocita: 1.6
     chiusa: true
@@ -221,7 +223,7 @@ stampanti:
   - marca: Bambu Lab
     nome: H2D Pro
     area_stampa_mm: [350, 320, 325]
-    costo_orario: 3.00
+    costo_orario: 0.60
     potenza_w: 230
     velocita: 1.6
     chiusa: true
@@ -229,7 +231,7 @@ stampanti:
   - marca: Bambu Lab
     nome: H2C
     area_stampa_mm: [330, 320, 325]
-    costo_orario: 2.80
+    costo_orario: 0.55
     potenza_w: 230
     velocita: 1.6
     chiusa: true
@@ -237,7 +239,7 @@ stampanti:
   - marca: Bambu Lab
     nome: H3C
     area_stampa_mm: [330, 320, 325]
-    costo_orario: 3.20
+    costo_orario: 0.65
     potenza_w: 280
     velocita: 1.7
     chiusa: true
@@ -245,7 +247,7 @@ stampanti:
   - marca: Bambu Lab
     nome: P1P
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 110
     velocita: 1.4
     chiusa: false
@@ -254,7 +256,7 @@ stampanti:
   - marca: Bambu Lab
     nome: P1S
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.50
+    costo_orario: 0.30
     potenza_w: 120
     velocita: 1.4
     chiusa: true
@@ -262,7 +264,7 @@ stampanti:
   - marca: Bambu Lab
     nome: X1 Carbon
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.80
+    costo_orario: 0.35
     potenza_w: 130
     velocita: 1.4
     chiusa: true
@@ -270,7 +272,7 @@ stampanti:
   - marca: Bambu Lab
     nome: X1E
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 2.20
+    costo_orario: 0.45
     potenza_w: 180
     velocita: 1.4
     chiusa: true
@@ -278,7 +280,7 @@ stampanti:
   - marca: Prusa
     nome: MINI+
     area_stampa_mm: [180, 180, 180]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 60
     velocita: 0.9
     chiusa: false
@@ -287,7 +289,7 @@ stampanti:
   - marca: Prusa
     nome: MK4S
     area_stampa_mm: [250, 210, 220]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 90
     velocita: 1.2
     chiusa: false
@@ -296,7 +298,7 @@ stampanti:
   - marca: Prusa
     nome: CORE One+
     area_stampa_mm: [250, 220, 270]
-    costo_orario: 1.60
+    costo_orario: 0.30
     potenza_w: 110
     velocita: 1.4
     chiusa: true
@@ -304,7 +306,7 @@ stampanti:
   - marca: Prusa
     nome: CORE One L
     area_stampa_mm: [300, 300, 330]
-    costo_orario: 2.20
+    costo_orario: 0.45
     potenza_w: 160
     velocita: 1.4
     chiusa: true
@@ -312,7 +314,7 @@ stampanti:
   - marca: Prusa
     nome: XL
     area_stampa_mm: [360, 360, 360]
-    costo_orario: 2.50
+    costo_orario: 0.50
     potenza_w: 200
     velocita: 1.2
     chiusa: false
@@ -321,7 +323,7 @@ stampanti:
   - marca: Creality
     nome: Ender-3 V3 SE
     area_stampa_mm: [220, 220, 250]
-    costo_orario: 0.70
+    costo_orario: 0.15
     potenza_w: 90
     velocita: 0.8
     chiusa: false
@@ -330,7 +332,7 @@ stampanti:
   - marca: Creality
     nome: Ender-3 V3 KE
     area_stampa_mm: [220, 220, 240]
-    costo_orario: 0.80
+    costo_orario: 0.15
     potenza_w: 100
     velocita: 1.2
     chiusa: false
@@ -339,7 +341,7 @@ stampanti:
   - marca: Creality
     nome: Ender-3 V3
     area_stampa_mm: [220, 220, 250]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 110
     velocita: 1.5
     chiusa: false
@@ -348,7 +350,7 @@ stampanti:
   - marca: Creality
     nome: Ender-3 V3 Neo
     area_stampa_mm: [220, 220, 220]
-    costo_orario: 0.80
+    costo_orario: 0.15
     potenza_w: 100
     velocita: 1.2
     chiusa: false
@@ -357,7 +359,7 @@ stampanti:
   - marca: Creality
     nome: Ender-3 V3 Mega
     area_stampa_mm: [420, 420, 420]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 250
     velocita: 1.2
     chiusa: false
@@ -366,7 +368,7 @@ stampanti:
   - marca: Creality
     nome: Ender-5 Max
     area_stampa_mm: [400, 400, 400]
-    costo_orario: 1.40
+    costo_orario: 0.30
     potenza_w: 220
     velocita: 1.5
     chiusa: false
@@ -375,7 +377,7 @@ stampanti:
   - marca: Creality
     nome: Hi
     area_stampa_mm: [260, 260, 300]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 120
     velocita: 1.3
     chiusa: false
@@ -384,7 +386,7 @@ stampanti:
   - marca: Creality
     nome: SPARKX i7
     area_stampa_mm: [260, 260, 255]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 110
     velocita: 1.3
     chiusa: false
@@ -393,7 +395,7 @@ stampanti:
   - marca: Creality
     nome: SPARKX i8
     area_stampa_mm: [260, 260, 255]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 110
     velocita: 1.3
     chiusa: false
@@ -402,7 +404,7 @@ stampanti:
   - marca: Creality
     nome: K2 SE
     area_stampa_mm: [220, 215, 245]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 110
     velocita: 1.4
     chiusa: false
@@ -411,7 +413,7 @@ stampanti:
   - marca: Creality
     nome: K2
     area_stampa_mm: [260, 260, 260]
-    costo_orario: 1.40
+    costo_orario: 0.30
     potenza_w: 140
     velocita: 1.5
     chiusa: true
@@ -419,7 +421,7 @@ stampanti:
   - marca: Creality
     nome: K2 Pro
     area_stampa_mm: [300, 300, 300]
-    costo_orario: 1.80
+    costo_orario: 0.35
     potenza_w: 180
     velocita: 1.5
     chiusa: true
@@ -427,7 +429,7 @@ stampanti:
   - marca: Creality
     nome: K2 Plus
     area_stampa_mm: [350, 350, 350]
-    costo_orario: 2.20
+    costo_orario: 0.45
     potenza_w: 220
     velocita: 1.5
     chiusa: true
@@ -435,7 +437,7 @@ stampanti:
   - marca: Creality
     nome: K3
     area_stampa_mm: [260, 260, 260]
-    costo_orario: 1.50
+    costo_orario: 0.30
     potenza_w: 140
     velocita: 1.4
     chiusa: false
@@ -444,7 +446,7 @@ stampanti:
   - marca: Elegoo
     nome: Neptune 4
     area_stampa_mm: [225, 225, 265]
-    costo_orario: 0.80
+    costo_orario: 0.15
     potenza_w: 110
     velocita: 1.3
     chiusa: false
@@ -453,7 +455,7 @@ stampanti:
   - marca: Elegoo
     nome: Neptune 4 Pro
     area_stampa_mm: [225, 225, 265]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 110
     velocita: 1.3
     chiusa: false
@@ -462,7 +464,7 @@ stampanti:
   - marca: Elegoo
     nome: Neptune 4 Plus
     area_stampa_mm: [320, 320, 385]
-    costo_orario: 1.10
+    costo_orario: 0.20
     potenza_w: 180
     velocita: 1.3
     chiusa: false
@@ -471,7 +473,7 @@ stampanti:
   - marca: Elegoo
     nome: Neptune 4 Max
     area_stampa_mm: [420, 420, 480]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 250
     velocita: 1.3
     chiusa: false
@@ -480,7 +482,7 @@ stampanti:
   - marca: Elegoo
     nome: Centauri Carbon
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.20
+    costo_orario: 0.25
     potenza_w: 130
     velocita: 1.4
     chiusa: true
@@ -488,7 +490,7 @@ stampanti:
   - marca: Elegoo
     nome: Centauri Carbon 2
     area_stampa_mm: [256, 256, 256]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 130
     velocita: 1.4
     chiusa: true
@@ -496,7 +498,7 @@ stampanti:
   - marca: Elegoo
     nome: OrangeStorm Giga
     area_stampa_mm: [800, 800, 1000]
-    costo_orario: 3.50
+    costo_orario: 0.70
     potenza_w: 600
     velocita: 1.0
     chiusa: false
@@ -505,7 +507,7 @@ stampanti:
   - marca: Anycubic
     nome: Kobra 3 V2
     area_stampa_mm: [255, 255, 260]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 110
     velocita: 1.5
     chiusa: false
@@ -514,7 +516,7 @@ stampanti:
   - marca: Anycubic
     nome: Kobra 3 Max V2
     area_stampa_mm: [420, 420, 500]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 250
     velocita: 1.4
     chiusa: false
@@ -523,7 +525,7 @@ stampanti:
   - marca: Anycubic
     nome: Kobra 4
     area_stampa_mm: [260, 260, 260]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 120
     velocita: 1.5
     chiusa: false
@@ -532,7 +534,7 @@ stampanti:
   - marca: Anycubic
     nome: Kobra X
     area_stampa_mm: [260, 260, 260]
-    costo_orario: 1.20
+    costo_orario: 0.25
     potenza_w: 130
     velocita: 1.5
     chiusa: false
@@ -541,7 +543,7 @@ stampanti:
   - marca: Anycubic
     nome: Kobra S1
     area_stampa_mm: [250, 250, 250]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 130
     velocita: 1.5
     chiusa: true
@@ -549,7 +551,7 @@ stampanti:
   - marca: Anycubic
     nome: Kobra S1 Max
     area_stampa_mm: [350, 350, 350]
-    costo_orario: 2.00
+    costo_orario: 0.40
     potenza_w: 220
     velocita: 1.5
     chiusa: true
@@ -560,7 +562,7 @@ stampanti:
     nome: Mars 5
     tecnologia: resina
     area_stampa_mm: [143.43, 89.6, 150]
-    costo_orario: 0.50
+    costo_orario: 0.10
     potenza_w: 40
     secondi_strato: 5.5
     chiusa: true
@@ -569,7 +571,7 @@ stampanti:
     nome: Mars 5 Ultra
     tecnologia: resina
     area_stampa_mm: [153.36, 77.76, 165]
-    costo_orario: 0.60
+    costo_orario: 0.10
     potenza_w: 50
     secondi_strato: 3.5
     chiusa: true
@@ -578,7 +580,7 @@ stampanti:
     nome: Saturn 4
     tecnologia: resina
     area_stampa_mm: [218.88, 122.88, 220]
-    costo_orario: 0.80
+    costo_orario: 0.15
     potenza_w: 70
     secondi_strato: 5.5
     chiusa: true
@@ -587,7 +589,7 @@ stampanti:
     nome: Saturn 4 Ultra 16K
     tecnologia: resina
     area_stampa_mm: [211.68, 118.37, 220]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 90
     secondi_strato: 4.0
     chiusa: true
@@ -596,7 +598,7 @@ stampanti:
     nome: Jupiter 2
     tecnologia: resina
     area_stampa_mm: [302.4, 161.98, 300]
-    costo_orario: 1.40
+    costo_orario: 0.30
     potenza_w: 120
     secondi_strato: 6.0
     chiusa: true
@@ -605,7 +607,7 @@ stampanti:
     nome: Photon Mono 4 Ultra
     tecnologia: resina
     area_stampa_mm: [153.4, 87, 165]
-    costo_orario: 0.60
+    costo_orario: 0.10
     potenza_w: 45
     secondi_strato: 4.5
     chiusa: true
@@ -614,7 +616,7 @@ stampanti:
     nome: Photon Mono M7 Pro
     tecnologia: resina
     area_stampa_mm: [223, 126, 230]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 80
     secondi_strato: 3.5
     chiusa: true
@@ -623,7 +625,7 @@ stampanti:
     nome: Photon Mono M7 Max
     tecnologia: resina
     area_stampa_mm: [298, 164, 300]
-    costo_orario: 1.30
+    costo_orario: 0.25
     potenza_w: 110
     secondi_strato: 6.5
     chiusa: true
@@ -632,7 +634,7 @@ stampanti:
     nome: Photon P1
     tecnologia: resina
     area_stampa_mm: [223, 126, 230]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 80
     secondi_strato: 6.0
     chiusa: true
@@ -641,7 +643,7 @@ stampanti:
     nome: Photon P1 Max
     tecnologia: resina
     area_stampa_mm: [285.5, 214, 300]
-    costo_orario: 1.50
+    costo_orario: 0.30
     potenza_w: 120
     secondi_strato: 9.0
     chiusa: true
@@ -650,7 +652,7 @@ stampanti:
     nome: HALOT-X1 Neo
     tecnologia: resina
     area_stampa_mm: [153.36, 77.76, 160]
-    costo_orario: 0.50
+    costo_orario: 0.10
     potenza_w: 40
     secondi_strato: 5.0
     chiusa: true
@@ -659,7 +661,7 @@ stampanti:
     nome: HALOT-X1
     tecnologia: resina
     area_stampa_mm: [211.68, 118.37, 200]
-    costo_orario: 1.00
+    costo_orario: 0.20
     potenza_w: 80
     secondi_strato: 3.5
     chiusa: true
@@ -668,7 +670,7 @@ stampanti:
     nome: HALOT-MAGE S
     tecnologia: resina
     area_stampa_mm: [228, 128, 230]
-    costo_orario: 0.90
+    costo_orario: 0.20
     potenza_w: 70
     secondi_strato: 4.0
     chiusa: true

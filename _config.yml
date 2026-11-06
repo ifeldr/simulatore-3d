@@ -4,7 +4,7 @@
 # ===============================================================
 
 title: Simulatore stampa 3D
-description: Carica i tuoi file STL e calcola subito peso, tempo e prezzo della stampa 3D.
+description: Carica i tuoi file STL e calcola subito peso, tempo e costo della stampa 3D.
 lang: it
 
 # Indirizzo di questo simulatore. Il nome del repository diventa la parte finale:
