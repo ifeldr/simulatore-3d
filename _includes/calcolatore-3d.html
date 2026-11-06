@@ -1,0 +1,90 @@
+{%- comment -%}
+  Calcolatore costo stampa 3D da file STL.
+  Uso: incluso da index.html.
+  Prezzi e parametri: _data/calcolatore_3d.yml
+{%- endcomment -%}
+<link rel="stylesheet" href="{{ '/assets/calcolatore-3d/calcolatore-3d.css' | relative_url }}">
+<script type="application/json" id="c3d-config">{{ site.data.calcolatore_3d | jsonify | replace: '<', '\u003c' }}</script>
+<div id="c3d-calc">
+  <div class="c3d-grid">
+    <section aria-label="Anteprima e file caricati">
+      <div class="c3d-plate" id="c3d-plate">
+        <canvas id="c3d-canvas" aria-label="Anteprima 3D del file selezionato" hidden></canvas>
+        <div class="c3d-drop" id="c3d-drop">
+          <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" aria-hidden="true">
+            <path d="M32 6 54 18v28L32 58 10 46V18z"/><path d="M10 18l22 12 22-12M32 30v28"/>
+          </svg>
+          <span class="c3d-drop-title">Trascina qui i tuoi file STL</span>
+          <span class="c3d-drop-sub">Puoi caricarne più di uno insieme. I file restano sul tuo computer: l'analisi avviene nel browser.</span>
+          <button type="button" class="c3d-btn-hot" id="c3d-pick">Scegli i file</button>
+        </div>
+        <p class="c3d-hint" id="c3d-hint" hidden>Trascina per ruotare</p>
+        <div class="c3d-overlay" id="c3d-overlay" hidden>
+          <div><div class="c3d-fname" id="c3d-fname"></div><div class="c3d-dims" id="c3d-dims"></div></div>
+        </div>
+        <input type="file" id="c3d-file" accept=".stl,model/stl,application/sla" multiple hidden>
+      </div>
+      <p class="c3d-msg" id="c3d-msg" role="status" aria-live="polite"></p>
+      <div id="c3d-list-wrap" hidden>
+        <div class="c3d-files-head" aria-hidden="true"><span>File</span><span>Materiale</span><span>Pezzi</span><span>Scala %</span><span></span></div>
+        <ul class="c3d-files" id="c3d-files"></ul>
+        <button type="button" class="c3d-add" id="c3d-add">Aggiungi altri file</button>
+      </div>
+    </section>
+
+    <section aria-label="Opzioni e prezzo">
+      <h3 class="c3d-title">Quanto costa stamparlo</h3>
+
+      <fieldset class="c3d-defaults">
+        <legend class="c3d-label">Impostazioni per i nuovi file <button type="button" class="c3d-linkbtn" id="c3d-apply-all" hidden>Applica a tutti</button></legend>
+        <p class="c3d-help">Ogni file caricato parte da queste impostazioni. Puoi cambiarle file per file nell'elenco.</p>
+        <div class="c3d-field">
+          <label class="c3d-label" for="c3d-material">Materiale</label>
+          <select id="c3d-material"></select>
+        </div>
+        <div class="c3d-field">
+          <label class="c3d-label" for="c3d-infill">Riempimento interno <output id="c3d-infill-out" for="c3d-infill">20%</output></label>
+          <input type="range" id="c3d-infill" min="10" max="100" step="5" value="20">
+        </div>
+        <div class="c3d-field">
+          <label class="c3d-check"><input type="checkbox" id="c3d-supports"> Con supporti</label>
+        </div>
+      </fieldset>
+
+      <fieldset class="c3d-field">
+        <legend class="c3d-label">Qualità</legend>
+        <div class="c3d-seg" id="c3d-quality"></div>
+      </fieldset>
+
+      <div class="c3d-field c3d-row">
+        <div>
+          <label class="c3d-label" for="c3d-unit">Unità dei file</label>
+          <select id="c3d-unit">
+            <option value="1">Millimetri</option>
+            <option value="10">Centimetri</option>
+            <option value="25.4">Pollici</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="c3d-result">
+        <p class="c3d-empty" id="c3d-empty">Carica uno o più file STL per vedere peso, tempo di stampa e prezzo.</p>
+        <div id="c3d-out" hidden>
+          <dl class="c3d-stats">
+            <div><dt>Pezzi</dt><dd id="c3d-pieces"></dd></div>
+            <div><dt>Peso totale</dt><dd id="c3d-weight"></dd></div>
+            <div><dt>Tempo totale</dt><dd id="c3d-time"></dd></div>
+          </dl>
+          <dl class="c3d-lines" id="c3d-lines"></dl>
+          <div class="c3d-total">
+            <div class="c3d-total-label">Totale IVA inclusa<small id="c3d-summary"></small></div>
+            <div class="c3d-total-value" id="c3d-total"></div>
+          </div>
+        </div>
+        <button type="button" class="c3d-cta" id="c3d-cta" disabled>Richiedi il preventivo</button>
+        <p class="c3d-note">Stima indicativa calcolata sulla geometria dei file. Il prezzo definitivo viene confermato dopo la verifica dei modelli.</p>
+      </div>
+    </section>
+  </div>
+</div>
+<script src="{{ '/assets/calcolatore-3d/calcolatore-3d.js' | relative_url }}" defer></script>

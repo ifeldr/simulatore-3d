@@ -1,0 +1,91 @@
+# ===============================================================
+#  Calcolatore stampa 3D: prezzi e parametri
+#  Modifica i valori, salva (commit) e GitHub Pages ricostruisce il sito
+#  in un paio di minuti. Importi in euro, IVA esclusa.
+#  I decimali si scrivono con il punto: 1.80, non 1,80.
+# ===============================================================
+
+email_preventivi: l0r3nz0g4rb1@gmail.com   # dove arrivano le richieste di preventivo
+
+# ---------- Prezzi ----------
+costo_orario: 1.80          # € per ora di stampa (energia, usura, ammortamento)
+preparazione_ordine: 5.00   # € fissi per ordine (slicing, preparazione, imballo)
+ordine_minimo: 10.00        # € imponibile minimo per ordine
+ricarico_percento: 30       # ricarico su materiale e tempo di stampa
+scarto_percento: 5          # materiale perso in spurghi, skirt e prove
+iva_percento: 22
+
+# ---------- Sconti quantità (sul totale dei pezzi dell'ordine) ----------
+# Vale la soglia più alta raggiunta. Per non applicare sconti: sconti_quantita: []
+sconti_quantita:
+  - da_pezzi: 10
+    sconto_percento: 5
+  - da_pezzi: 50
+    sconto_percento: 10
+
+# ---------- Materiali ----------
+# densita in g/cm³, prezzo_kg in €/kg
+# velocita rispetto al PLA: 1 = uguale, 0.5 = metà velocità
+# colore: colore dell'anteprima 3D, in esadecimale tra virgolette
+# descrizione: testo mostrato nella pagina (facoltativo)
+# Il primo materiale è quello proposto di default.
+materiali:
+  - nome: PLA
+    descrizione: "Facile, preciso e con finitura pulita. Ideale per prototipi, modellini e oggetti d'arredo."
+    densita: 1.24
+    prezzo_kg: 25
+    velocita: 1.0
+    colore: "#E9E4DA"
+  - nome: PETG
+    descrizione: "Più resistente e un po' flessibile, sopporta meglio umidità e calore. Adatto a pezzi funzionali."
+    densita: 1.27
+    prezzo_kg: 28
+    velocita: 0.9
+    colore: "#7FB3CF"
+  - nome: ABS
+    descrizione: "Robusto e lavorabile dopo la stampa, regge temperature più alte del PLA."
+    densita: 1.04
+    prezzo_kg: 27
+    velocita: 0.9
+    colore: "#A9AEB6"
+  - nome: ASA (per esterni)
+    descrizione: "Simile all'ABS ma resiste ai raggi UV: la scelta giusta per i pezzi che stanno all'aperto."
+    densita: 1.07
+    prezzo_kg: 32
+    velocita: 0.9
+    colore: "#D8CDB4"
+  - nome: TPU (flessibile)
+    descrizione: "Gommoso ed elastico: guarnizioni, protezioni, piedini antiscivolo."
+    densita: 1.21
+    prezzo_kg: 40
+    velocita: 0.45
+    colore: "#E5673E"
+
+# ---------- Qualità di stampa ----------
+# strato_mm: altezza dello strato
+# portata_mm3s: volume medio stampato al secondo, spostamenti inclusi.
+#   Più è alta, più la stima del tempo è breve: calibrala confrontando
+#   qualche stima con il tempo indicato dal tuo slicer.
+qualita:
+  - nome: Bozza
+    strato_mm: 0.28
+    portata_mm3s: 9
+  - nome: Standard
+    strato_mm: 0.20
+    portata_mm3s: 6
+    predefinita: true
+  - nome: Fine
+    strato_mm: 0.12
+    portata_mm3s: 3.5
+
+# ---------- Stampante e limiti ----------
+area_stampa_mm: [256, 256, 256]   # X, Y, Z della stampante più grande
+max_file: 20                      # file per preventivo
+max_mb_per_file: 80               # dimensione massima di ogni file
+
+# ---------- Stima di peso e tempo ----------
+spessore_pareti_mm: 0.8           # pareti e strati pieni (2 perimetri da 0.4 mm)
+supporti_materiale_percento: 15   # materiale in più per i file con supporti
+supporti_tempo_percento: 10       # tempo in più per i file con supporti
+riscaldamento_minuti: 5           # per ordine
+cambio_strato_secondi: 2
