@@ -38,11 +38,6 @@ html #c3d-calc .c3d-drop-title, html #c3d-calc .c3d-dims, html #c3d-calc .c3d-ti
   html #c3d-calc .c3d-cta:disabled { background: #3a3f47; color: #9aa2ad; }
 }
 
-.faq { max-width: 760px; margin-bottom: 56px; }
-.faq h2 { font-size: 26px; font-weight: 600; margin: 0 0 12px; }
-.faq details { border-bottom: 1px solid var(--linea); padding: 12px 0; }
-.faq summary { cursor: pointer; font-weight: 600; }
-.faq details p { margin: 10px 0 4px; }
 
 .piede { border-top: 1px solid var(--linea); font-size: 15px; color: var(--tenue); }
 .piede-riga { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-top: 20px; padding-bottom: 28px; }
