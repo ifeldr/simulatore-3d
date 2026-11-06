@@ -8,7 +8,9 @@
   var CONFIG = {
     contactEmail: 'preventivi@tuosito.it',  // dove arrivano le richieste
     vat: 0.22,                 // IVA
-    machineRate: 1.80,         // € per ora di stampa (energia, usura, ammortamento)
+    machineRate: 1.80,         // € per ora di stampa (usura, ammortamento; l'energia è a parte)
+    energyPrice: 0.30,         // € per kWh di energia elettrica (modificabile nella pagina)
+    powerW: 120,               // consumo medio in stampa in watt, se non ci sono stampanti
     setupFee: 5.00,            // € fissi per ordine (preparazione, slicing, imballo)
     minOrder: 10.00,           // € imponibile minimo per ordine
     markup: 0.30,              // ricarico sul costo di materiale e macchina (0.30 = 30%)
@@ -58,6 +60,8 @@
     }
     set(CONFIG, 'vat', pct(d.iva_percento, 100));
     set(CONFIG, 'machineRate', n(d.costo_orario, 0, 1000));
+    set(CONFIG, 'energyPrice', n(d.costo_energia_kwh, 0, 10));
+    set(CONFIG, 'powerW', n(d.potenza_w, 0, 10000));
     set(CONFIG, 'setupFee', n(d.preparazione_ordine, 0, 100000));
     set(CONFIG, 'minOrder', n(d.ordine_minimo, 0, 100000));
     set(CONFIG, 'markup', pct(d.ricarico_percento, 1000));
@@ -81,11 +85,12 @@
         var area = Array.isArray(r.area_stampa_mm) && r.area_stampa_mm.length === 3
           ? r.area_stampa_mm.map(function (x) { return n(x, 1, 5000); }) : null;
         if (!area || area.some(function (x) { return x === undefined; })) area = CONFIG.buildVolume.slice();
-        var rate = n(r.costo_orario, 0, 1000), sp = n(r.velocita, 0.1, 10);
+        var rate = n(r.costo_orario, 0, 1000), sp = n(r.velocita, 0.1, 10), pw = n(r.potenza_w, 0, 10000);
         return {
           id: 'p' + (i + 1), name: String(r.nome), buildVolume: area,
           machineRate: rate === undefined ? CONFIG.machineRate : rate,
           speed: sp === undefined ? 1 : sp,
+          powerW: pw === undefined ? CONFIG.powerW : pw,
           enclosed: r.chiusa === true,
           materials: Array.isArray(r.materiali) && r.materiali.length ? r.materiali.map(function (x) { return String(x); }) : null,
           note: typeof r.note === 'string' ? r.note : '',
@@ -151,7 +156,7 @@
     plate: $('c3d-plate'), canvas: $('c3d-canvas'), drop: $('c3d-drop'), pick: $('c3d-pick'),
     file: $('c3d-file'), overlay: $('c3d-overlay'), fname: $('c3d-fname'), dims: $('c3d-dims'),
     hint: $('c3d-hint'), msg: $('c3d-msg'), listWrap: $('c3d-list-wrap'), list: $('c3d-files'), add: $('c3d-add'),
-    printer: $('c3d-printer'), printerField: $('c3d-printer-field'), printerInfo: $('c3d-printer-info'),
+    printer: $('c3d-printer'), energy: $('c3d-energy'), printerField: $('c3d-printer-field'), printerInfo: $('c3d-printer-info'),
     material: $('c3d-material'), applyAll: $('c3d-apply-all'), quality: $('c3d-quality'), infill: $('c3d-infill'),
     infillOut: $('c3d-infill-out'), unit: $('c3d-unit'), supports: $('c3d-supports'),
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
@@ -191,6 +196,11 @@
   }
   function buildVolume() { var p = printer(); return p ? p.buildVolume : CONFIG.buildVolume; }
   function machineRate() { var p = printer(); return p ? p.machineRate : CONFIG.machineRate; }
+  function powerKW() { var p = printer(); return (p ? p.powerW : CONFIG.powerW) / 1000; }
+  // Costo dell'energia: il valore inserito nella pagina viene ricordato su questo browser
+  try { var savedEnergy = localStorage.getItem('c3d-energia'); if (savedEnergy !== null && +savedEnergy >= 0) el.energy.value = savedEnergy; } catch (e) {}
+  if (el.energy.value === '') el.energy.value = String(CONFIG.energyPrice);
+  function energyPrice() { var v = parseFloat(String(el.energy.value).replace(',', '.')); return isFinite(v) && v >= 0 ? v : CONFIG.energyPrice; }
   function printerSpeed() { var p = printer(); return p ? p.speed : 1; }
   // Un materiale è stampabile se la stampante non ha un elenco o se il nome compare nell'elenco
   // (basta la prima parola: "ASA" vale anche per "ASA (per esterni)").
@@ -325,6 +335,8 @@
       V: V, size: size, grams: grams, hours: hours,
       mat: grams / 1000 * mt.pricePerKg * (1 + CONFIG.waste) * k,
       mach: hours * machineRate() * k,
+      kwh: hours * powerKW(),
+      energy: hours * powerKW() * energyPrice(),
       fits: a[0] <= b[0] && a[1] <= b[1] && a[2] <= b[2]
     };
   }
@@ -347,6 +359,7 @@
     var o = globals();
     var matBy = {}, matOrder = [];
     var wrongMat = 0;
+    var energy = 0, kwh = 0;
     var pieces = 0, mat = 0, mach = 0, grams = 0, hours = 0, tooBig = 0, results = [];
     models.forEach(function (m) { pieces += m.qty; });
     var disc = 0;
@@ -357,9 +370,9 @@
       results.push(r);
       if (!(m.materialId in matBy)) { matBy[m.materialId] = 0; matOrder.push(m.materialId); }
       matBy[m.materialId] += r.mat * m.qty;
-      mat += r.mat * m.qty; mach += r.mach * m.qty; grams += r.grams * m.qty; hours += r.hours * m.qty;
+      mat += r.mat * m.qty; mach += r.mach * m.qty; energy += r.energy * m.qty; kwh += r.kwh * m.qty; grams += r.grams * m.qty; hours += r.hours * m.qty;
       if (!r.fits) tooBig++;
-      var piecePrice = (r.mat + r.mach) * (1 - disc) * (1 + CONFIG.vat);
+      var piecePrice = ((r.mat + r.mach) * (1 - disc) + r.energy) * (1 + CONFIG.vat);
       m.row.meta.textContent = fmtSize(r.size) + ', ' + num1.format(r.grams) + ' g, ' + money.format(piecePrice) + ' a pezzo';
       var warn = !r.fits ? 'Supera l\'area di stampa: riduci la scala o lo dividiamo in parti.'
         : !materialAllowed(matById(m.materialId)) ? matById(m.materialId).name + ' non si stampa su questa stampante: scegli un altro materiale.'
@@ -370,9 +383,11 @@
       m.row.swatch.style.background = matById(m.materialId).color;
     });
     hours += CONFIG.heatUpMinutes / 60;
+    kwh += CONFIG.heatUpMinutes / 60 * powerKW();
+    energy += CONFIG.heatUpMinutes / 60 * powerKW() * energyPrice();
 
     var discount = (mat + mach) * disc;
-    var net = mat + mach - discount + CONFIG.setupFee;
+    var net = mat + mach - discount + energy + CONFIG.setupFee;
     var minAdj = net < CONFIG.minOrder ? CONFIG.minOrder - net : 0;
     net += minAdj;
     var vat = net * CONFIG.vat, total = net + vat;
@@ -387,6 +402,7 @@
 
     var rows = matOrder.map(function (id) { return ['Materiale ' + matById(id).name, matBy[id]]; });
     rows.push(['Tempo di stampa', mach]);
+    rows.push(['Energia elettrica (' + num1.format(kwh) + ' kWh)', energy]);
     if (discount > 0) rows.push(['Sconto quantità ' + num0.format(disc * 100) + '%', -discount]);
     rows.push(['Preparazione ordine', CONFIG.setupFee]);
     if (minAdj > 0) rows.push(['Adeguamento a ordine minimo', minAdj]);
@@ -584,28 +600,17 @@
   });
   el.quality.addEventListener('change', update);
 
-  // ---------- Richiesta preventivo ----------
+  // ---------- Calcola ----------
+  // Il prezzo si aggiorna già a ogni modifica: il pulsante ricalcola e porta il risultato in vista.
   el.cta.addEventListener('click', function () {
-    if (!models.length || !last) return;
-    var o = last.o;
-    var lines = [
-      'Buongiorno,',
-      'vorrei un preventivo per questa stampa 3D (allego i file a questa email):',
-      ''
-    ];
-    models.forEach(function (m, i) {
-      lines.push((i + 1) + '. ' + m.name + ': ' + matById(m.materialId).name + ', ' + m.qty + ' pz, riempimento ' + m.infill + '%, ' + (m.supports ? 'con' : 'senza') + ' supporti, scala ' + m.scale + '%, ' + fmtSize(m.r.size) + ', ' + num1.format(m.r.grams) + ' g a pezzo');
-    });
-    lines.push('',
-      (printer() ? 'Stampante: ' + printer().name : null),
-      'Qualità: ' + o.quality.label + ' (' + o.quality.layer + ' mm)',
-      'Pezzi totali: ' + last.pieces,
-      'Prezzo stimato: ' + money.format(last.total) + ' IVA inclusa',
-      '', 'Nome:', 'Telefono:');
-    lines = lines.filter(function (x) { return x !== null; });
-    window.location.href = 'mailto:' + CONFIG.contactEmail +
-      '?subject=' + encodeURIComponent('Preventivo stampa 3D: ' + models.length + (models.length === 1 ? ' file' : ' file')) +
-      '&body=' + encodeURIComponent(lines.join('\n'));
+    if (!models.length) return;
+    update();
+    el.out.classList.remove('is-flash'); void el.out.offsetWidth; el.out.classList.add('is-flash');
+    el.out.scrollIntoView({ behavior: 'smooth', block: 'center' });
+  });
+  el.energy.addEventListener('input', function () {
+    try { localStorage.setItem('c3d-energia', el.energy.value); } catch (e) {}
+    update();
   });
 
   // ---------- Anteprima 3D (three.js caricato solo quando serve) ----------
