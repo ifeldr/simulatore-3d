@@ -39,8 +39,16 @@
         <legend class="c3d-label">Impostazioni per i nuovi file <button type="button" class="c3d-linkbtn" id="c3d-apply-all" hidden>Applica a tutti</button></legend>
         <p class="c3d-help">Ogni file caricato parte da queste impostazioni. Puoi cambiarle file per file nell'elenco.</p>
         <div class="c3d-field" id="c3d-printer-field" hidden>
-          <label class="c3d-label" for="c3d-printer">Stampante</label>
-          <select id="c3d-printer"></select>
+          <div class="c3d-row">
+            <div>
+              <label class="c3d-label" for="c3d-brand">Marca</label>
+              <select id="c3d-brand"></select>
+            </div>
+            <div>
+              <label class="c3d-label" for="c3d-printer">Modello</label>
+              <select id="c3d-printer"></select>
+            </div>
+          </div>
           <p class="c3d-help c3d-printer-info" id="c3d-printer-info"></p>
         </div>
         <div class="c3d-field">
