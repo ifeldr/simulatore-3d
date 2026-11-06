@@ -1,0 +1,49 @@
+/* Pagina del simulatore: colori e caratteri vicini al tema Chirpy del sito principale.
+   Modalità scura automatica in base alle impostazioni del dispositivo. */
+:root {
+  --sfondo: #ffffff;
+  --testo: #34343c;
+  --tenue: #757575;
+  --linea: #ececec;
+  --testata: #f6f8fa;
+  --link: #0056b2;
+  color-scheme: light dark;
+}
+@media (prefers-color-scheme: dark) {
+  :root { --sfondo: #1b1b1e; --testo: #afb0b1; --tenue: #868686; --linea: #2c2d2d; --testata: #1e1e20; --link: #8ab4f8; }
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { margin: 0; font-family: "Source Sans 3", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; font-size: 17px; line-height: 1.6; color: var(--testo); background: var(--sfondo); }
+a { color: var(--link); }
+.contenitore { width: 100%; max-width: 1140px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 32px); }
+
+.testata { background: var(--testata); border-bottom: 1px solid var(--linea); }
+.testata-riga { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 64px; }
+.marchio { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 20px; color: var(--testo); text-decoration: none; }
+.marchio svg { width: 28px; height: 28px; color: #F4B400; flex: none; }
+.indietro { font-weight: 600; text-decoration: none; white-space: nowrap; }
+.indietro:hover { text-decoration: underline; }
+
+main h1 { font-size: clamp(30px, 4vw, 40px); font-weight: 600; margin: 36px 0 8px; }
+.sottotitolo { color: var(--tenue); max-width: 46em; margin: 0 0 24px; }
+#c3d-calc#c3d-calc { font-family: inherit; margin-bottom: 48px; --c3d-accent: #0d6efd; --c3d-accent-hover: #0b5ed7; }
+html #c3d-calc .c3d-drop-title, html #c3d-calc .c3d-dims, html #c3d-calc .c3d-title, html #c3d-calc .c3d-total-value { font-family: inherit; }
+
+/* Simulatore in modalità scura */
+@media (prefers-color-scheme: dark) {
+  #c3d-calc#c3d-calc { --c3d-ink: #d3d6db; --c3d-muted: #9aa2ad; --c3d-line: #3a3f47; --c3d-soft: #262a31; --c3d-surface: #1f2226; --c3d-accent: #3d8bfd; --c3d-accent-hover: #6ea8fe; }
+  html #c3d-calc select, html #c3d-calc input[type=number], html #c3d-calc .c3d-seg label { background: #181b1f; color: var(--c3d-ink); }
+  html #c3d-calc .c3d-result { border-top-color: var(--c3d-line); }
+  html #c3d-calc .c3d-msg.is-warn, html #c3d-calc .c3d-file-warn { color: #e0b44a; }
+  html #c3d-calc .c3d-cta:disabled { background: #3a3f47; color: #9aa2ad; }
+}
+
+.faq { max-width: 760px; margin-bottom: 56px; }
+.faq h2 { font-size: 26px; font-weight: 600; margin: 0 0 12px; }
+.faq details { border-bottom: 1px solid var(--linea); padding: 12px 0; }
+.faq summary { cursor: pointer; font-weight: 600; }
+.faq details p { margin: 10px 0 4px; }
+
+.piede { border-top: 1px solid var(--linea); font-size: 15px; color: var(--tenue); }
+.piede-riga { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; padding-top: 20px; padding-bottom: 28px; }
+.piede p { margin: 0; }

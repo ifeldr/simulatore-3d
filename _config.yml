@@ -1,0 +1,26 @@
+# ===============================================================
+#  Simulatore costo stampa 3D
+#  Prezzi, materiali e parametri: _data/calcolatore_3d.yml
+# ===============================================================
+
+title: Simulatore stampa 3D
+description: Carica i tuoi file STL e calcola subito peso, tempo e prezzo della stampa 3D.
+lang: it
+
+# Indirizzo di questo simulatore. Il nome del repository diventa la parte finale:
+# repository "simulatore-3d" -> https://ifeldr.github.io/simulatore-3d/
+url: "https://ifeldr.github.io"
+baseurl: "/simulatore-3d"
+
+# Sito principale: nome e indirizzo mostrati in alto per tornare al sito
+sito_principale:
+  nome: Lorenzo Garbi
+  url: "https://ifeldr.github.io"
+
+# Pagina, menu e piè di pagina sono in index.html: nessun tema esterno
+theme: null
+
+exclude:
+  - README.md
+  - Gemfile
+  - Gemfile.lock
