@@ -17,7 +17,7 @@ si ricalcola. Le stampanti presenti sono esempi: tieni solo le tue e correggi i 
 
 ## File
 
-- `index.html`: la pagina (intestazione, testi, domande frequenti)
+- `index.html`: la pagina (intestazione e testi)
 - `_includes/calcolatore-3d.html`: il calcolatore
 - `assets/calcolatore-3d/`: logica e stile del calcolatore
 - `assets/pagina.css`: stile della pagina
