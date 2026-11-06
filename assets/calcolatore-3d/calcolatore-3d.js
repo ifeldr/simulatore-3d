@@ -8,7 +8,7 @@
   var CONFIG = {
     contactEmail: 'preventivi@tuosito.it',  // dove arrivano le richieste
     vat: 0.22,                 // IVA
-    machineRate: 1.80,         // € per ora di stampa (usura, ammortamento; l'energia è a parte)
+    machineRate: 0.30,         // € per ora di usura della stampante (l'energia è a parte)
     energyPrice: 0.30,         // € per kWh di energia elettrica (modificabile nella pagina)
     powerW: 120,               // consumo medio in stampa in watt, se non ci sono stampanti
     setupFee: 5.00,            // € fissi per ordine (preparazione, slicing, imballo)
@@ -178,7 +178,7 @@
     material: $('c3d-material'), applyAll: $('c3d-apply-all'), quality: $('c3d-quality'), infill: $('c3d-infill'),
     infillOut: $('c3d-infill-out'), unit: $('c3d-unit'), supports: $('c3d-supports'),
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
-    time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), summary: $('c3d-summary'), cta: $('c3d-cta')
+    time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta')
   };
 
   var money = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
@@ -537,13 +537,13 @@
     el.time.textContent = fmtTime(hours);
 
     var rows = matOrder.map(function (id) { return ['Materiale ' + matById(id).name, matBy[id]]; });
-    rows.push(['Tempo di stampa', mach]);
+    rows.push(['Usura stampante', mach]);
     rows.push(['Energia elettrica (' + (kwh < 1 ? num2.format(kwh) : num1.format(kwh)) + ' kWh)', energy]);
     if (post > 0) rows.push(['Lavaggio e polimerizzazione resina', post]);
     if (discount > 0) rows.push(['Sconto quantità ' + num0.format(disc * 100) + '%', -discount]);
-    rows.push(['Preparazione ordine', CONFIG.setupFee]);
+    if (CONFIG.setupFee > 0) rows.push(['Preparazione', CONFIG.setupFee]);
     if (minAdj > 0) rows.push(['Adeguamento a ordine minimo', minAdj]);
-    rows.push(['IVA ' + num0.format(CONFIG.vat * 100) + '%', vat]);
+    if (CONFIG.vat > 0) rows.push(['IVA ' + num0.format(CONFIG.vat * 100) + '%', vat]);
     el.lines.innerHTML = '';
     rows.forEach(function (row) {
       var div = document.createElement('div');
@@ -552,6 +552,7 @@
       div.appendChild(dt); div.appendChild(dd); el.lines.appendChild(div);
     });
     el.total.textContent = money.format(total);
+    el.totalLabel.firstChild.nodeValue = CONFIG.vat > 0 ? 'Totale IVA inclusa' : 'Costo totale';
     el.summary.textContent = models.length === 1 ? '1 file' : models.length + ' file';
 
     if (wrongMat) setMsg(wrongMat === 1 ? 'Un file usa un materiale che la sua stampante non supporta.'

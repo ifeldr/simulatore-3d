@@ -1,6 +1,6 @@
 # Simulatore costo stampa 3D
 
-Pagina che calcola peso, tempo e prezzo di una stampa 3D da uno o più file STL.
+Pagina che calcola peso, tempo e costo reale di una stampa 3D da uno o più file STL.
 È collegata al sito principale https://ifeldr.github.io ma vive in questo repository separato,
 all'indirizzo https://ifeldr.github.io/simulatore-3d/.
 
