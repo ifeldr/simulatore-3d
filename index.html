@@ -42,6 +42,9 @@ layout: null
   <div class="contenitore piede-riga">
     <p>© {{ site.time | date: "%Y" }} <a href="{{ site.sito_principale.url }}">{{ site.sito_principale.nome }}</a></p>
     <p><a href="mailto:{{ site.data.calcolatore_3d.email_preventivi }}">{{ site.data.calcolatore_3d.email_preventivi }}</a></p>
+    {%- if site.caffe_url and site.caffe_url != "" %}
+    <p><a href="{{ site.caffe_url }}" target="_blank" rel="noopener">☕ Offrimi un caffè</a></p>
+    {%- endif %}
   </div>
 </footer>
 </body>

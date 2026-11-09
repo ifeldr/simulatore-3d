@@ -17,6 +17,10 @@ sito_principale:
   nome: Lorenzo Garbi
   url: "https://ifeldr.github.io"
 
+# Link "Offrimi un caffè" (PayPal.me) sotto il risultato e nel piè di pagina.
+# L'importo finale (1EUR) è quello proposto: chi dona può cambiarlo. Vuoto = nessun caffè.
+caffe_url: "https://www.paypal.me/lorenzogarbi/1EUR"
+
 # Pagina, menu e piè di pagina sono in index.html: nessun tema esterno
 theme: null
 

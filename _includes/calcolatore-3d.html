@@ -107,6 +107,9 @@
         </div>
         <button type="button" class="c3d-cta" id="c3d-cta" disabled>Calcola</button>
         <p class="c3d-note">Stima indicativa calcolata sulla geometria dei file.</p>
+        {%- if site.caffe_url and site.caffe_url != "" %}
+        <p class="c3d-coffee"><a href="{{ site.caffe_url }}" target="_blank" rel="noopener">Ti è stato utile? Offrimi un caffè ☕</a></p>
+        {%- endif %}
       </div>
     </section>
   </div>

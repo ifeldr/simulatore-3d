@@ -145,3 +145,6 @@
 #c3d-calc .c3d-file-extra select.c3d-file-printer,#c3d-calc .c3d-file-extra select.c3d-file-brand{max-width:9.5em}
 #c3d-calc .c3d-tech-field{margin-bottom:12px}
 #c3d-calc .c3d-file-extra select.c3d-file-tech{max-width:7.5em}
+#c3d-calc .c3d-coffee{margin:8px 0 0;font-size:15px}
+#c3d-calc .c3d-coffee a{color:var(--c3d-accent);font-weight:600;text-decoration:none}
+#c3d-calc .c3d-coffee a:hover{text-decoration:underline}
