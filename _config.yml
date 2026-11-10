@@ -9,6 +9,7 @@ lang: it
 
 # Indirizzo di questo simulatore. Il nome del repository diventa la parte finale:
 # repository "simulatore-3d" -> https://ifeldr.github.io/simulatore-3d/
+# Versioni: /it/ (italiano) e /en/ (inglese); l'indirizzo principale porta a quella giusta.
 url: "https://ifeldr.github.io"
 baseurl: "/simulatore-3d"
 

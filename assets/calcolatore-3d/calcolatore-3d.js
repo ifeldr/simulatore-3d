@@ -1,4 +1,4 @@
-/* Calcolatore costo stampa 3D da file STL, v1.5 per Jekyll / GitHub Pages (filamento e resina) */
+/* Calcolatore costo stampa 3D da file STL, v1.5 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
 (function () {
   'use strict';
 
@@ -22,6 +22,7 @@
     heatUpMinutes: 5,          // riscaldamento e preparazione per lavoro
     layerOverheadSec: 2,       // secondi persi a ogni cambio strato
     supports: { material: 0.15, time: 0.10 }, // maggiorazione con supporti
+    usdRate: 1.12,             // cambio 1 € = X $ (da _data/calcolatore_3d.yml, cambio_eur_usd)
     printers: [],              // stampanti selezionabili (da _data/calcolatore_3d.yml); vuoto = nessun menu
     resin: {                   // stampa a resina
       wall: 2.0,               // mm di parete per i pezzi svuotati
@@ -51,6 +52,23 @@
   };
   /* ==================================================== */
 
+  // ---------- Lingua ----------
+  // I testi arrivano da _data/testi/<lingua>.yml tramite l'include (blocco c3d-lang).
+  var LANG = { lang: 'it', locale: 'it-IT', js: {} };
+  try {
+    var langEl = document.getElementById('c3d-lang');
+    if (langEl) { var lj = JSON.parse(langEl.textContent); if (lj && typeof lj === 'object') LANG = lj; LANG.js = LANG.js || {}; }
+  } catch (e) {}
+  var EN = LANG.lang === 'en';
+  function T(key, vars) {
+    var t = LANG.js[key];
+    if (typeof t !== 'string') t = key;
+    if (vars) Object.keys(vars).forEach(function (k) { t = t.split('{' + k + '}').join(vars[k]); });
+    return t;
+  }
+  // Testo nella lingua della pagina: campo "<nome>_en" nella versione inglese, se presente
+  function loc(r, campo) { return EN && r[campo + '_en'] ? String(r[campo + '_en']) : (r[campo] === undefined || r[campo] === null ? '' : String(r[campo])); }
+
   // Le impostazioni vere arrivano da _data/calcolatore_3d.yml tramite l'include di Jekyll.
   // Ogni valore mancante o non valido mantiene quello predefinito qui sopra.
   function applySiteData(d) {
@@ -66,6 +84,7 @@
       CONFIG.contactEmail = d.email_preventivi.trim();
     }
     set(CONFIG, 'vat', pct(d.iva_percento, 100));
+    set(CONFIG, 'usdRate', n(d.cambio_eur_usd, 0.01, 100));
     set(CONFIG, 'machineRate', n(d.costo_orario, 0, 1000));
     set(CONFIG, 'energyPrice', n(d.costo_energia_kwh, 0, 10));
     set(CONFIG, 'powerW', n(d.potenza_w, 0, 10000));
@@ -98,14 +117,14 @@
         if (!area || area.some(function (x) { return x === undefined; })) area = CONFIG.buildVolume.slice();
         var rate = n(r.costo_orario, 0, 1000), sp = n(r.velocita, 0.1, 10), pw = n(r.potenza_w, 0, 10000), ls = n(r.secondi_strato, 0.5, 120);
         return {
-          id: 'p' + (i + 1), model: String(r.nome), brand: r.marca ? String(r.marca) : 'Altre',
+          id: 'p' + (i + 1), model: String(r.nome), brand: r.marca ? String(r.marca) : T('otherBrand'),
           name: (r.marca ? String(r.marca) + ' ' : '') + String(r.nome), buildVolume: area,
           machineRate: rate === undefined ? CONFIG.machineRate : rate,
           speed: sp === undefined ? 1 : sp,
           powerW: pw === undefined ? CONFIG.powerW : pw,
           enclosed: r.chiusa === true,
           materials: Array.isArray(r.materiali) && r.materiali.length ? r.materiali.map(function (x) { return String(x); }) : null,
-          note: typeof r.note === 'string' ? r.note : '',
+          note: loc(r, 'note'),
           tech: r.tecnologia === 'resina' ? 'resina' : 'filamento',
           layerSec: ls === undefined ? CONFIG.resin.layerSec : ls,
           default: r.predefinita === true
@@ -132,7 +151,7 @@
         var layer = n(r.strato_mm, 0.01, 2), flow = n(r.portata_mm3s, 0.1, 200);
         if (layer === undefined || flow === undefined) return null;
         var rl = n(r.strato_resina_mm, 0.01, 0.5);
-        return { id: 'q' + (i + 1), label: String(r.nome), layer: layer, flow: flow,
+        return { id: 'q' + (i + 1), label: loc(r, 'nome'), layer: layer, flow: flow,
                  resinLayer: rl === undefined ? (layer >= 0.24 ? 0.1 : layer >= 0.16 ? 0.05 : 0.03) : rl, default: r.predefinita === true };
       }).filter(Boolean);
       if (qs.length) {
@@ -150,7 +169,7 @@
         if (dens === undefined || price === undefined) return null;
         var speed = n(r.velocita, 0.05, 5);
         var color = (typeof r.colore === 'string' && /^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(r.colore.trim())) ? r.colore.trim() : '#E9E4DA';
-        return { id: 'm' + (i + 1), name: String(r.nome), density: dens, pricePerKg: price,
+        return { id: 'm' + (i + 1), name: loc(r, 'nome'), baseName: String(r.nome), density: dens, pricePerKg: price,
                  speed: speed === undefined ? 1 : speed, color: color,
                  tech: r.tecnologia === 'resina' ? 'resina' : 'filamento' };
       }).filter(Boolean);
@@ -173,6 +192,7 @@
     plate: $('c3d-plate'), canvas: $('c3d-canvas'), drop: $('c3d-drop'), pick: $('c3d-pick'),
     file: $('c3d-file'), overlay: $('c3d-overlay'), fname: $('c3d-fname'), dims: $('c3d-dims'),
     hint: $('c3d-hint'), msg: $('c3d-msg'), listWrap: $('c3d-list-wrap'), list: $('c3d-files'), add: $('c3d-add'),
+    currency: $('c3d-currency'), energyUnit: $('c3d-energy-unit'),
     printer: $('c3d-printer'), brand: $('c3d-brand'), tech: $('c3d-tech'), techField: $('c3d-tech-field'),
     infillField: $('c3d-infill-field'), hollowField: $('c3d-hollow-field'), hollow: $('c3d-hollow'), energy: $('c3d-energy'), printerField: $('c3d-printer-field'), printerInfo: $('c3d-printer-info'),
     material: $('c3d-material'), applyAll: $('c3d-apply-all'), quality: $('c3d-quality'), infill: $('c3d-infill'),
@@ -181,10 +201,24 @@
     time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta')
   };
 
-  var money = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR' });
-  var num1 = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 1 });
-  var num0 = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 0 });
-  var num2 = new Intl.NumberFormat('it-IT', { maximumFractionDigits: 2 });
+  // ---------- Valuta ----------
+  // Tutti i calcoli sono in euro; gli importi vengono convertiti solo quando si mostrano.
+  function leggi(k) { try { return localStorage.getItem(k); } catch (e) { return null; } }
+  function scrivi(k, v) { try { localStorage.setItem(k, v); } catch (e) {} }
+  var currency = leggi('c3d-valuta');
+  if (currency !== 'EUR' && currency !== 'USD') {
+    var nl = (navigator.languages && navigator.languages[0]) || navigator.language || '';
+    currency = EN && /-US$/i.test(nl) ? 'USD' : 'EUR';
+  }
+  function rate() { return currency === 'USD' ? CONFIG.usdRate : 1; }
+  var moneyFmt;
+  function makeMoney() { moneyFmt = new Intl.NumberFormat(LANG.locale, { style: 'currency', currency: currency, currencyDisplay: 'narrowSymbol' }); }
+  makeMoney();
+  var money = { format: function (eur) { return moneyFmt.format(eur * rate()); } };
+  var num1 = new Intl.NumberFormat(LANG.locale, { maximumFractionDigits: 1 });
+  var num0 = new Intl.NumberFormat(LANG.locale, { maximumFractionDigits: 0 });
+  var num2 = new Intl.NumberFormat(LANG.locale, { maximumFractionDigits: 2 });
+  var num2f = new Intl.NumberFormat(LANG.locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
   // ---------- Opzioni dinamiche ----------
   CONFIG.materials.forEach(function (m) {
@@ -196,8 +230,8 @@
     input.type = 'radio'; input.name = 'c3d-quality'; input.id = id; input.value = q.id; input.checked = !!q.default;
     var label = document.createElement('label'); label.htmlFor = id;
     var small = document.createElement('small');
-    small.textContent = q.layer.toFixed(2).replace('.', ',') + ' mm' +
-      (CONFIG.printers.some(function (p) { return p.tech === 'resina'; }) ? ' · resina ' + q.resinLayer.toFixed(2).replace('.', ',') : '');
+    small.textContent = num2f.format(q.layer) + ' mm' +
+      (CONFIG.printers.some(function (p) { return p.tech === 'resina'; }) ? T('resinLayer', { n: num2f.format(q.resinLayer) }) : '');
     label.appendChild(document.createTextNode(q.label)); label.appendChild(small);
     el.quality.appendChild(input); el.quality.appendChild(label);
   });
@@ -209,7 +243,7 @@
     CONFIG.printers.forEach(function (p) { if (out.indexOf(p.tech) < 0) out.push(p.tech); });
     return out;
   }
-  function techLabel(t) { return t === 'resina' ? 'Resina' : 'Filamento'; }
+  function techLabel(t) { return t === 'resina' ? T('resin') : T('filament'); }
   function fillTechs(techSel) {
     techs().forEach(function (t) {
       var o = document.createElement('option'); o.value = t; o.textContent = techLabel(t); techSel.appendChild(o);
@@ -260,9 +294,15 @@
   function machineRate(p) { return p ? p.machineRate : CONFIG.machineRate; }
   function powerKW(p) { return (p ? p.powerW : CONFIG.powerW) / 1000; }
   // Costo dell'energia: il valore inserito nella pagina viene ricordato su questo browser
-  try { var savedEnergy = localStorage.getItem('c3d-energia'); if (savedEnergy !== null && +savedEnergy >= 0) el.energy.value = savedEnergy; } catch (e) {}
-  if (el.energy.value === '') el.energy.value = String(CONFIG.energyPrice);
-  function energyPrice() { var v = parseFloat(String(el.energy.value).replace(',', '.')); return isFinite(v) && v >= 0 ? v : CONFIG.energyPrice; }
+  // Il prezzo dell'energia si salva in euro e si mostra nella valuta scelta
+  var energyEUR = parseFloat(leggi('c3d-energia'));
+  if (!(isFinite(energyEUR) && energyEUR >= 0)) energyEUR = CONFIG.energyPrice;
+  function showEnergy() {
+    el.energy.value = String(Math.round(energyEUR * rate() * 1000) / 1000);
+    el.energyUnit.textContent = (currency === 'USD' ? '$' : '€') + '/kWh';
+  }
+  showEnergy();
+  function energyPrice() { return energyEUR; }
   function printerSpeed(p) { return p ? p.speed : 1; }
   function techOf(p) { return p ? p.tech : 'filamento'; }
   // Un materiale è stampabile se la stampante non ha un elenco o se il nome compare nell'elenco
@@ -271,7 +311,7 @@
   function materialAllowed(mt, p) {
     if (mt.tech !== techOf(p)) return false;
     if (!p || !p.materials) return true;
-    return p.materials.some(function (x) { return primaParola(x) === primaParola(mt.name); });
+    return p.materials.some(function (x) { return primaParola(x) === primaParola(mt.baseName || mt.name); });
   }
   function refreshMaterialOptions() {
     var sels = [{ sel: el.material, p: printer() }].concat(models.map(function (m) { return { sel: m.row.matSel, p: printerOf(m) }; }));
@@ -282,7 +322,7 @@
         var otherTech = matById(op.value).tech !== techOf(x.p);
         op.hidden = otherTech;
         op.disabled = !ok;
-        op.textContent = op.getAttribute('data-nome') + (ok ? '' : (sel === el.material ? ' (non disponibile)' : ' ✗'));
+        op.textContent = op.getAttribute('data-nome') + (ok ? '' : (sel === el.material ? T('notAvailable') : ' ✗'));
       });
     });
     // Se il materiale scelto è dell'altra tecnologia, si passa al primo materiale adatto
@@ -304,7 +344,7 @@
     var p = printer();
     if (p) {
       var b = p.buildVolume.map(function (x) { return num0.format(x); }).join(' × ');
-      el.printerInfo.textContent = 'Area di stampa ' + b + ' mm' + (p.tech === 'resina' ? '' : (p.enclosed ? ', stampante chiusa' : '')) + (p.note ? '. ' + p.note : '');
+      el.printerInfo.textContent = T('buildArea', { dims: b }) + (p.tech === 'resina' ? '' : (p.enclosed ? T('enclosed') : '')) + (p.note ? '. ' + p.note : '');
     }
   }
 
@@ -330,7 +370,7 @@
     var pos;
     if (isBinary) {
       var count = dv.getUint32(80, true);
-      if (count === 0 || 84 + count * 50 > buffer.byteLength) throw new Error('File STL binario non valido o incompleto.');
+      if (count === 0 || 84 + count * 50 > buffer.byteLength) throw new Error(T('errBinary'));
       pos = new Float32Array(count * 9);
       for (var i = 0; i < count; i++) {
         var off = 84 + i * 50 + 12;
@@ -340,7 +380,7 @@
       var text = new TextDecoder().decode(new Uint8Array(buffer));
       var re = /vertex\s+([-+\d.eE]+)\s+([-+\d.eE]+)\s+([-+\d.eE]+)/g, m, arr = [];
       while ((m = re.exec(text))) arr.push(+m[1], +m[2], +m[3]);
-      if (arr.length < 9) throw new Error('Nessun triangolo trovato nel file.');
+      if (arr.length < 9) throw new Error(T('errNoTriangles'));
       arr.length -= arr.length % 9;
       pos = new Float32Array(arr);
     }
@@ -504,9 +544,10 @@
       mat += r.mat * m.qty; mach += r.mach * m.qty; energy += r.energy * m.qty; kwh += r.kwh * m.qty; grams += r.grams * m.qty; hours += r.hours * m.qty;
       if (!r.fits) tooBig++;
       var piecePrice = ((r.mat + r.mach) * (1 - disc) + r.energy + (r.post || 0)) * (1 + CONFIG.vat);
-      m.row.meta.textContent = fmtSize(r.size) + ', ' + (r.resin ? num1.format(r.ml) + ' ml di resina' : num1.format(r.grams) + ' g') + ', ' + money.format(piecePrice) + ' a pezzo';
-      var warn = !r.fits ? 'Supera l\'area di stampa di ' + (printerOf(m) ? printerOf(m).name : 'questa stampante') + ': riduci la scala o scegli una stampante più grande.'
-        : !materialAllowed(matById(m.materialId), printerOf(m)) ? matById(m.materialId).name + ' non si stampa su ' + (printerOf(m) ? printerOf(m).name : 'questa stampante') + ': scegli un altro materiale o un\'altra stampante.'
+      m.row.meta.textContent = fmtSize(r.size) + ', ' + (r.resin ? T('mlResin', { n: num1.format(r.ml) }) : num1.format(r.grams) + ' g') + ', ' + T('each', { price: money.format(piecePrice) });
+      var prName = printerOf(m) ? printerOf(m).name : T('thisPrinter');
+      var warn = !r.fits ? T('warnTooBig', { printer: prName })
+        : !materialAllowed(matById(m.materialId), printerOf(m)) ? T('warnMaterial', { material: matById(m.materialId).name, printer: prName })
         : (m.unitHint || '');
       if (!materialAllowed(matById(m.materialId), printerOf(m))) wrongMat++;
       m.row.warn.textContent = warn; m.row.warn.hidden = !warn;
@@ -536,14 +577,14 @@
     el.weight.textContent = grams >= 1000 ? num1.format(grams / 1000) + ' kg' : num1.format(grams) + ' g';
     el.time.textContent = fmtTime(hours);
 
-    var rows = matOrder.map(function (id) { return ['Materiale ' + matById(id).name, matBy[id]]; });
-    rows.push(['Usura stampante', mach]);
-    rows.push(['Energia elettrica (' + (kwh < 1 ? num2.format(kwh) : num1.format(kwh)) + ' kWh)', energy]);
-    if (post > 0) rows.push(['Lavaggio e polimerizzazione resina', post]);
-    if (discount > 0) rows.push(['Sconto quantità ' + num0.format(disc * 100) + '%', -discount]);
-    if (CONFIG.setupFee > 0) rows.push(['Preparazione', CONFIG.setupFee]);
-    if (minAdj > 0) rows.push(['Adeguamento a ordine minimo', minAdj]);
-    if (CONFIG.vat > 0) rows.push(['IVA ' + num0.format(CONFIG.vat * 100) + '%', vat]);
+    var rows = matOrder.map(function (id) { return [T('rowMaterial', { name: matById(id).name }), matBy[id]]; });
+    rows.push([T('rowWear'), mach]);
+    rows.push([T('rowEnergy', { kwh: kwh < 1 ? num2.format(kwh) : num1.format(kwh) }), energy]);
+    if (post > 0) rows.push([T('rowPost'), post]);
+    if (discount > 0) rows.push([T('rowDiscount', { pct: num0.format(disc * 100) }), -discount]);
+    if (CONFIG.setupFee > 0) rows.push([T('rowSetup'), CONFIG.setupFee]);
+    if (minAdj > 0) rows.push([T('rowMinimum'), minAdj]);
+    if (CONFIG.vat > 0) rows.push([T('rowVat', { pct: num0.format(CONFIG.vat * 100) }), vat]);
     el.lines.innerHTML = '';
     rows.forEach(function (row) {
       var div = document.createElement('div');
@@ -552,13 +593,11 @@
       div.appendChild(dt); div.appendChild(dd); el.lines.appendChild(div);
     });
     el.total.textContent = money.format(total);
-    el.totalLabel.firstChild.nodeValue = CONFIG.vat > 0 ? 'Totale IVA inclusa' : 'Costo totale';
-    el.summary.textContent = models.length === 1 ? '1 file' : models.length + ' file';
+    el.totalLabel.firstChild.nodeValue = CONFIG.vat > 0 ? T('totalVat') : T('total');
+    el.summary.textContent = models.length === 1 ? T('oneFile') : T('manyFiles', { n: models.length });
 
-    if (wrongMat) setMsg(wrongMat === 1 ? 'Un file usa un materiale che la sua stampante non supporta.'
-      : wrongMat + ' file usano materiali che la loro stampante non supporta.', 'warn');
-    else if (tooBig) setMsg(tooBig === 1 ? 'Un file supera l\'area di stampa della sua stampante.'
-      : tooBig + ' file superano l\'area di stampa della loro stampante.', 'warn');
+    if (wrongMat) setMsg(wrongMat === 1 ? T('wrongMatOne') : T('wrongMatMany', { n: wrongMat }), 'warn');
+    else if (tooBig) setMsg(tooBig === 1 ? T('tooBigOne') : T('tooBigMany', { n: tooBig }), 'warn');
     else if (notice) setMsg(notice, 'error');
     else if (!busy) setMsg('');
 
@@ -574,7 +613,7 @@
   function addRow(m) {
     var li = document.createElement('li'); li.className = 'c3d-file';
     var pick = document.createElement('button'); pick.type = 'button'; pick.className = 'c3d-file-pick';
-    pick.setAttribute('aria-label', 'Mostra ' + m.name + ' in anteprima');
+    pick.setAttribute('aria-label', T('ariaShow', { name: m.name }));
     var name = document.createElement('span'); name.className = 'c3d-file-name'; name.title = m.name;
     var sw = document.createElement('span'); sw.className = 'c3d-swatch'; sw.setAttribute('aria-hidden', 'true');
     name.appendChild(sw); name.appendChild(document.createTextNode(m.name));
@@ -596,21 +635,21 @@
     var mtName = document.createElement('span'); mtName.className = 'c3d-vh'; mtName.textContent = ' (' + m.name + ')'; mtLabel.appendChild(mtName);
     var matSel = document.createElement('select');
     CONFIG.materials.forEach(function (x) {
-      var op = document.createElement('option'); op.value = x.id; op.textContent = x.name.replace(/\s*\(.*\)$/, '').replace(/^Resina\s+(\S)/i, function (_, c) { return c.toUpperCase(); }); op.title = x.name;
+      var op = document.createElement('option'); op.value = x.id; op.textContent = x.name.replace(/\s*\(.*\)$/, '').replace(/^Resina\s+(\S)/i, function (_, c) { return c.toUpperCase(); }).replace(/\s+resin$/i, ''); op.title = x.name;
       op.setAttribute('data-nome', op.textContent);
       matSel.appendChild(op);
     });
     matSel.value = m.materialId;
     matSel.addEventListener('change', function () { m.materialId = matSel.value; update(); });
     matWrap.appendChild(mtLabel); matWrap.appendChild(matSel);
-    var qty = numField('Pezzi', m.qty, 1, 999);
-    var scale = numField('Scala %', m.scale, 1, 1000);
+    var qty = numField(T('quantity'), m.qty, 1, 999);
+    var scale = numField(T('scale'), m.scale, 1, 1000);
     qty.input.addEventListener('input', function () { m.qty = Math.max(1, Math.floor(+qty.input.value || 1)); update(); });
     scale.input.addEventListener('input', function () { m.scale = Math.max(1, +scale.input.value || 100); update(); });
 
     var extra = document.createElement('div'); extra.className = 'c3d-file-extra';
     var infLabel = document.createElement('label');
-    infLabel.appendChild(document.createTextNode('Riempimento'));
+    infLabel.appendChild(document.createTextNode(T('infill')));
     var infHidden = document.createElement('span'); infHidden.className = 'c3d-vh'; infHidden.textContent = ' (' + m.name + ')';
     infLabel.appendChild(infHidden);
     var infSel = document.createElement('select');
@@ -623,22 +662,22 @@
     var supLabel = document.createElement('label');
     var supBox = document.createElement('input'); supBox.type = 'checkbox'; supBox.checked = m.supports;
     supBox.addEventListener('change', function () { m.supports = supBox.checked; update(); });
-    supLabel.appendChild(supBox); supLabel.appendChild(document.createTextNode('Supporti'));
+    supLabel.appendChild(supBox); supLabel.appendChild(document.createTextNode(T('supports')));
     var supHidden = document.createElement('span'); supHidden.className = 'c3d-vh'; supHidden.textContent = ' (' + m.name + ')';
     supLabel.appendChild(supHidden);
     var prSel = null, brSel = null, teSel = null;
     if (CONFIG.printers.length) {
       var prLabel = document.createElement('label');
-      prLabel.appendChild(document.createTextNode('Stampante'));
+      prLabel.appendChild(document.createTextNode(T('printer')));
       var prHidden = document.createElement('span'); prHidden.className = 'c3d-vh'; prHidden.textContent = ' (' + m.name + ')';
       prLabel.appendChild(prHidden);
       teSel = document.createElement('select'); teSel.className = 'c3d-file-tech';
-      teSel.setAttribute('aria-label', 'Tecnologia (' + m.name + ')');
+      teSel.setAttribute('aria-label', T('ariaTech', { name: m.name }));
       fillTechs(teSel); if (techs().length < 2) teSel.hidden = true;
       brSel = document.createElement('select'); brSel.className = 'c3d-file-brand';
-      brSel.setAttribute('aria-label', 'Marca della stampante (' + m.name + ')');
+      brSel.setAttribute('aria-label', T('ariaBrand', { name: m.name }));
       prSel = document.createElement('select'); prSel.className = 'c3d-file-printer';
-      prSel.setAttribute('aria-label', 'Modello della stampante (' + m.name + ')');
+      prSel.setAttribute('aria-label', T('ariaModel', { name: m.name }));
       setPicker(teSel, brSel, prSel, m.printerId);
       wirePicker(teSel, brSel, prSel, function () {
         m.printerId = prSel.value; refreshMaterialOptions();
@@ -650,11 +689,11 @@
     }
     // Resina: al posto del riempimento si sceglie se il pezzo è pieno o svuotato
     var holLabel = document.createElement('label'); holLabel.hidden = true;
-    holLabel.appendChild(document.createTextNode('Interno'));
+    holLabel.appendChild(document.createTextNode(T('interior')));
     var holHidden = document.createElement('span'); holHidden.className = 'c3d-vh'; holHidden.textContent = ' (' + m.name + ')';
     holLabel.appendChild(holHidden);
     var holSel = document.createElement('select');
-    [['0', 'Pieno'], ['1', 'Svuotato']].forEach(function (x) {
+    [['0', T('solid')], ['1', T('hollow')]].forEach(function (x) {
       var op = document.createElement('option'); op.value = x[0]; op.textContent = x[1]; holSel.appendChild(op);
     });
     holSel.value = m.hollow ? '1' : '0';
@@ -663,7 +702,7 @@
     extra.appendChild(infLabel); extra.appendChild(holLabel); extra.appendChild(supLabel);
 
     var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'c3d-file-remove';
-    rm.setAttribute('aria-label', 'Rimuovi ' + m.name); rm.textContent = '×';
+    rm.setAttribute('aria-label', T('ariaRemove', { name: m.name })); rm.textContent = '×';
     rm.addEventListener('click', function () { removeModel(m.id); });
     pick.addEventListener('click', function () { select(m.id); });
 
@@ -699,8 +738,8 @@
     var files = Array.prototype.slice.call(list || []);
     if (!files.length) return;
     var room = CONFIG.maxFiles - models.length - queue.length;
-    if (room <= 0) { setMsg('Puoi caricare al massimo ' + CONFIG.maxFiles + ' file per preventivo.', 'error'); return; }
-    if (files.length > room) { errors.push('Caricati solo i primi ' + room + ' file: il limite è ' + CONFIG.maxFiles + '.'); files = files.slice(0, room); }
+    if (room <= 0) { setMsg(T('maxFiles', { max: CONFIG.maxFiles }), 'error'); return; }
+    if (files.length > room) { errors.push(T('onlyFirst', { n: room, max: CONFIG.maxFiles })); files = files.slice(0, room); }
     if (!busy) notice = '';
     queue = queue.concat(files);
     if (!busy) next();
@@ -717,26 +756,25 @@
       return;
     }
     busy = true;
-    setMsg('Analisi di ' + file.name + '…' + (queue.length ? ' (altri ' + queue.length + ' in coda)' : ''));
-    if (!/\.stl$/i.test(file.name)) { errors.push(file.name + ': non è un file .stl.'); return next(); }
-    if (file.size > CONFIG.maxFileMB * 1024 * 1024) { errors.push(file.name + ': supera ' + CONFIG.maxFileMB + ' MB.'); return next(); }
+    setMsg(T('analyzing', { name: file.name }) + (queue.length ? T('queued', { n: queue.length }) : ''));
+    if (!/\.stl$/i.test(file.name)) { errors.push(T('notStl', { name: file.name })); return next(); }
+    if (file.size > CONFIG.maxFileMB * 1024 * 1024) { errors.push(T('tooLarge', { name: file.name, mb: CONFIG.maxFileMB })); return next(); }
     var reader = new FileReader();
-    reader.onerror = function () { errors.push(file.name + ': impossibile leggerlo.'); next(); };
+    reader.onerror = function () { errors.push(T('cantRead', { name: file.name })); next(); };
     reader.onload = function () {
       try {
         var pos = parseSTL(reader.result);
         var stats = meshStats(pos);
-        if (!(stats.vol > 0)) throw new Error('il modello non ha volume, verifica che la mesh sia chiusa.');
+        if (!(stats.vol > 0)) throw new Error(T('errNoVolume'));
         var maxDim = Math.max.apply(null, stats.size);
-        var hint = maxDim < 5 ? 'Misura meno di 5 mm: controlla l\'unità dei file.'
-          : maxDim > 2000 ? 'Supera i 2 metri: controlla l\'unità dei file.' : '';
+        var hint = maxDim < 5 ? T('hintSmall') : maxDim > 2000 ? T('hintLarge') : '';
         var m = { id: nextId++, name: file.name, pos: pos, stats: stats, qty: 1, scale: 100, materialId: el.material.value, printerId: CONFIG.printers.length ? el.printer.value : null, hollow: el.hollow.checked,
                   infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
         models.push(m); addRow(m); refreshMaterialOptions();
         if (selectedId === null) { selectedId = m.id; markActive(); update(); showPreview(); }
         else update();
       } catch (e) {
-        errors.push(file.name + ': ' + (e.message || 'file STL non valido.'));
+        errors.push(file.name + ': ' + (e.message || T('errInvalid')));
       }
       setTimeout(next, 0);
     };
@@ -786,8 +824,15 @@
     el.out.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
   el.energy.addEventListener('input', function () {
-    try { localStorage.setItem('c3d-energia', el.energy.value); } catch (e) {}
+    var v = parseFloat(String(el.energy.value).replace(',', '.'));
+    if (isFinite(v) && v >= 0) { energyEUR = v / rate(); scrivi('c3d-energia', String(energyEUR)); }
     update();
+  });
+  el.currency.value = currency;
+  el.currency.addEventListener('change', function () {
+    currency = el.currency.value === 'USD' ? 'USD' : 'EUR';
+    scrivi('c3d-valuta', currency);
+    makeMoney(); showEnergy(); update();
   });
 
   // ---------- Anteprima 3D (three.js caricato solo quando serve) ----------

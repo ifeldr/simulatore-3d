@@ -1,24 +1,27 @@
 {%- comment -%}
   Calcolatore costo stampa 3D da file STL.
-  Uso: incluso da index.html.
-  Prezzi e parametri: _data/calcolatore_3d.yml
+  Uso: incluso da _layouts/simulatore.html, con la lingua della pagina (page.lingua).
+  Prezzi e parametri: _data/calcolatore_3d.yml. Testi: _data/testi/it.yml ed en.yml.
 {%- endcomment -%}
+{%- assign testi = site.data.testi[page.lingua] | default: site.data.testi.it -%}
+{%- assign t = testi.pagina -%}
 <link rel="stylesheet" href="{{ '/assets/calcolatore-3d/calcolatore-3d.css' | relative_url }}">
+<script type="application/json" id="c3d-lang">{"lang": {{ testi.lingua | jsonify }}, "locale": {{ testi.locale | jsonify }}, "js": {{ testi.js | jsonify | replace: '<', '\u003c' }}}</script>
 <script type="application/json" id="c3d-config">{{ site.data.calcolatore_3d | jsonify | replace: '<', '\u003c' }}</script>
 <div id="c3d-calc">
   <div class="c3d-grid">
-    <section aria-label="Anteprima e file caricati">
+    <section aria-label="{{ t.aria_anteprima }}">
       <div class="c3d-plate" id="c3d-plate">
-        <canvas id="c3d-canvas" aria-label="Anteprima 3D del file selezionato" hidden></canvas>
+        <canvas id="c3d-canvas" aria-label="{{ t.aria_canvas }}" hidden></canvas>
         <div class="c3d-drop" id="c3d-drop">
           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" aria-hidden="true">
             <path d="M32 6 54 18v28L32 58 10 46V18z"/><path d="M10 18l22 12 22-12M32 30v28"/>
           </svg>
-          <span class="c3d-drop-title">Trascina qui i tuoi file STL</span>
-          <span class="c3d-drop-sub">Puoi caricarne più di uno insieme. I file restano sul tuo computer: l'analisi avviene nel browser.</span>
-          <button type="button" class="c3d-btn-hot" id="c3d-pick">Scegli i file</button>
+          <span class="c3d-drop-title">{{ t.trascina_titolo }}</span>
+          <span class="c3d-drop-sub">{{ t.trascina_sotto }}</span>
+          <button type="button" class="c3d-btn-hot" id="c3d-pick">{{ t.scegli_file }}</button>
         </div>
-        <p class="c3d-hint" id="c3d-hint" hidden>Trascina per ruotare</p>
+        <p class="c3d-hint" id="c3d-hint" hidden>{{ t.ruota }}</p>
         <div class="c3d-overlay" id="c3d-overlay" hidden>
           <div><div class="c3d-fname" id="c3d-fname"></div><div class="c3d-dims" id="c3d-dims"></div></div>
         </div>
@@ -26,89 +29,96 @@
       </div>
       <p class="c3d-msg" id="c3d-msg" role="status" aria-live="polite"></p>
       <div id="c3d-list-wrap" hidden>
-        <div class="c3d-files-head" aria-hidden="true"><span>File</span><span>Materiale</span><span>Pezzi</span><span>Scala %</span><span></span></div>
+        <div class="c3d-files-head" aria-hidden="true"><span>{{ t.col_file }}</span><span>{{ t.col_materiale }}</span><span>{{ t.col_pezzi }}</span><span>{{ t.col_scala }}</span><span></span></div>
         <ul class="c3d-files" id="c3d-files"></ul>
-        <button type="button" class="c3d-add" id="c3d-add">Aggiungi altri file</button>
+        <button type="button" class="c3d-add" id="c3d-add">{{ t.aggiungi_file }}</button>
       </div>
     </section>
 
-    <section aria-label="Opzioni e costo">
-      <h3 class="c3d-title">Quanto costa stamparlo</h3>
+    <section aria-label="{{ t.aria_opzioni }}">
+      <h3 class="c3d-title">{{ t.titolo_calcolo }}</h3>
 
       <fieldset class="c3d-defaults">
-        <legend class="c3d-label">Impostazioni per i nuovi file <button type="button" class="c3d-linkbtn" id="c3d-apply-all" hidden>Applica a tutti</button></legend>
-        <p class="c3d-help">Ogni file caricato parte da queste impostazioni. Puoi cambiarle file per file nell'elenco.</p>
+        <legend class="c3d-label">{{ t.impostazioni_nuovi }} <button type="button" class="c3d-linkbtn" id="c3d-apply-all" hidden>{{ t.applica_tutti }}</button></legend>
+        <p class="c3d-help">{{ t.impostazioni_aiuto }}</p>
         <div class="c3d-field" id="c3d-printer-field" hidden>
           <div class="c3d-tech-field" id="c3d-tech-field" hidden>
-            <label class="c3d-label" for="c3d-tech">Tecnologia</label>
+            <label class="c3d-label" for="c3d-tech">{{ t.tecnologia }}</label>
             <select id="c3d-tech"></select>
           </div>
           <div class="c3d-row">
             <div>
-              <label class="c3d-label" for="c3d-brand">Marca</label>
+              <label class="c3d-label" for="c3d-brand">{{ t.marca }}</label>
               <select id="c3d-brand"></select>
             </div>
             <div>
-              <label class="c3d-label" for="c3d-printer">Modello</label>
+              <label class="c3d-label" for="c3d-printer">{{ t.modello }}</label>
               <select id="c3d-printer"></select>
             </div>
           </div>
           <p class="c3d-help c3d-printer-info" id="c3d-printer-info"></p>
         </div>
         <div class="c3d-field">
-          <label class="c3d-label" for="c3d-material">Materiale</label>
+          <label class="c3d-label" for="c3d-material">{{ t.materiale }}</label>
           <select id="c3d-material"></select>
         </div>
         <div class="c3d-field" id="c3d-infill-field">
-          <label class="c3d-label" for="c3d-infill">Riempimento interno <output id="c3d-infill-out" for="c3d-infill">20%</output></label>
+          <label class="c3d-label" for="c3d-infill">{{ t.riempimento }} <output id="c3d-infill-out" for="c3d-infill">20%</output></label>
           <input type="range" id="c3d-infill" min="10" max="100" step="5" value="20">
         </div>
         <div class="c3d-field" id="c3d-hollow-field" hidden>
-          <label class="c3d-check"><input type="checkbox" id="c3d-hollow"> Pezzi svuotati (meno resina, servono fori di drenaggio)</label>
+          <label class="c3d-check"><input type="checkbox" id="c3d-hollow"> {{ t.svuotati }}</label>
         </div>
         <div class="c3d-field">
-          <label class="c3d-check"><input type="checkbox" id="c3d-supports"> Con supporti</label>
+          <label class="c3d-check"><input type="checkbox" id="c3d-supports"> {{ t.supporti }}</label>
         </div>
       </fieldset>
 
       <fieldset class="c3d-field">
-        <legend class="c3d-label">Qualità</legend>
+        <legend class="c3d-label">{{ t.qualita }}</legend>
         <div class="c3d-seg" id="c3d-quality"></div>
       </fieldset>
 
-      <div class="c3d-field c3d-row">
+      <div class="c3d-field c3d-row3">
         <div>
-          <label class="c3d-label" for="c3d-unit">Unità dei file</label>
+          <label class="c3d-label" for="c3d-unit">{{ t.unita }}</label>
           <select id="c3d-unit">
-            <option value="1">Millimetri</option>
-            <option value="10">Centimetri</option>
-            <option value="25.4">Pollici</option>
+            <option value="1">{{ t.millimetri }}</option>
+            <option value="10">{{ t.centimetri }}</option>
+            <option value="25.4">{{ t.pollici }}</option>
           </select>
         </div>
         <div>
-          <label class="c3d-label" for="c3d-energy">Energia (€/kWh)</label>
+          <label class="c3d-label" for="c3d-currency">{{ t.valuta }}</label>
+          <select id="c3d-currency">
+            <option value="EUR">{{ t.euro }}</option>
+            <option value="USD">{{ t.dollari }}</option>
+          </select>
+        </div>
+        <div>
+          <label class="c3d-label" for="c3d-energy"><span>{{ t.energia }} (<span id="c3d-energy-unit">€/kWh</span>)</span></label>
           <input type="number" id="c3d-energy" min="0" max="10" step="0.01" inputmode="decimal">
         </div>
       </div>
 
       <div class="c3d-result">
-        <p class="c3d-empty" id="c3d-empty">Carica uno o più file STL per vedere peso, tempo di stampa e costo.</p>
+        <p class="c3d-empty" id="c3d-empty">{{ t.vuoto }}</p>
         <div id="c3d-out" hidden>
           <dl class="c3d-stats">
-            <div><dt>Pezzi</dt><dd id="c3d-pieces"></dd></div>
-            <div><dt>Peso totale</dt><dd id="c3d-weight"></dd></div>
-            <div><dt>Tempo totale</dt><dd id="c3d-time"></dd></div>
+            <div><dt>{{ t.pezzi }}</dt><dd id="c3d-pieces"></dd></div>
+            <div><dt>{{ t.peso_totale }}</dt><dd id="c3d-weight"></dd></div>
+            <div><dt>{{ t.tempo_totale }}</dt><dd id="c3d-time"></dd></div>
           </dl>
           <dl class="c3d-lines" id="c3d-lines"></dl>
           <div class="c3d-total">
-            <div class="c3d-total-label" id="c3d-total-label">Costo totale<small id="c3d-summary"></small></div>
+            <div class="c3d-total-label" id="c3d-total-label">{{ t.costo_totale }}<small id="c3d-summary"></small></div>
             <div class="c3d-total-value" id="c3d-total"></div>
           </div>
         </div>
-        <button type="button" class="c3d-cta" id="c3d-cta" disabled>Calcola</button>
-        <p class="c3d-note">Stima indicativa calcolata sulla geometria dei file.</p>
+        <button type="button" class="c3d-cta" id="c3d-cta" disabled>{{ t.calcola }}</button>
+        <p class="c3d-note">{{ t.nota }}</p>
         {%- if site.caffe_url and site.caffe_url != "" %}
-        <p class="c3d-coffee"><a href="{{ site.caffe_url }}" target="_blank" rel="noopener">Ti è stato utile? Offrimi un caffè ☕</a></p>
+        <p class="c3d-coffee"><a href="{{ site.caffe_url }}" target="_blank" rel="noopener">{{ testi.caffe_risultato }}</a></p>
         {%- endif %}
       </div>
     </section>

@@ -1,0 +1,109 @@
+# Texts for the English version of the simulator (address: /simulatore-3d/en/)
+# Words in braces, like {name}, are replaced by the simulator: leave them as they are.
+lingua: en
+locale: en-US
+titolo: 3D print cost calculator
+descrizione: Upload your STL files and instantly calculate weight, time and cost of a 3D print, filament or resin.
+h1: 3D print cost calculator
+sottotitolo: "Upload one or more STL files and choose material, infill and supports for each: weight, print time and cost update instantly. Your files stay on your computer, because everything is analysed in the browser."
+torna_al_sito: "← Back to site"
+lingua_selettore: Language
+caffe_risultato: "Was this useful? Buy me a coffee ☕"
+caffe_piede: "☕ Buy me a coffee"
+
+pagina:
+  aria_anteprima: Preview and uploaded files
+  aria_canvas: 3D preview of the selected file
+  trascina_titolo: Drop your STL files here
+  trascina_sotto: "You can upload several at once. Your files stay on your computer: everything is analysed in the browser."
+  scegli_file: Choose files
+  ruota: Drag to rotate
+  col_file: File
+  col_materiale: Material
+  col_pezzi: Qty
+  col_scala: Scale %
+  aggiungi_file: Add more files
+  aria_opzioni: Options and cost
+  titolo_calcolo: How much does it cost to print
+  impostazioni_nuovi: Settings for new files
+  applica_tutti: Apply to all
+  impostazioni_aiuto: Every uploaded file starts with these settings. You can change them file by file in the list.
+  tecnologia: Technology
+  marca: Brand
+  modello: Model
+  materiale: Material
+  riempimento: Infill
+  svuotati: Hollow parts (less resin, drain holes needed)
+  supporti: With supports
+  qualita: Quality
+  unita: File units
+  millimetri: Millimetres
+  centimetri: Centimetres
+  pollici: Inches
+  valuta: Currency
+  euro: Euro (€)
+  dollari: US dollar ($)
+  energia: Electricity
+  vuoto: Upload one or more STL files to see weight, print time and cost.
+  pezzi: Parts
+  peso_totale: Total weight
+  tempo_totale: Total time
+  costo_totale: Total cost
+  calcola: Calculate
+  nota: Rough estimate based on the geometry of the files.
+
+js:
+  notAvailable: " (not available)"
+  errBinary: Invalid or incomplete binary STL file.
+  errNoTriangles: No triangles found in the file.
+  errNoVolume: the model has no volume, check that the mesh is closed.
+  errInvalid: invalid STL file.
+  mlResin: "{n} ml of resin"
+  each: "{price} each"
+  thisPrinter: this printer
+  warnTooBig: "Exceeds the build volume of {printer}: reduce the scale or choose a larger printer."
+  warnMaterial: "{material} can't be printed on {printer}: choose another material or printer."
+  rowMaterial: "Material: {name}"
+  rowWear: Printer wear
+  rowEnergy: "Electricity ({kwh} kWh)"
+  rowPost: Resin washing and curing
+  rowDiscount: "Quantity discount {pct}%"
+  rowSetup: Setup
+  rowMinimum: Minimum order adjustment
+  rowVat: "VAT {pct}%"
+  totalVat: Total incl. VAT
+  total: Total cost
+  oneFile: 1 file
+  manyFiles: "{n} files"
+  wrongMatOne: A file uses a material its printer doesn't support.
+  wrongMatMany: "{n} files use materials their printer doesn't support."
+  tooBigOne: A file exceeds the build volume of its printer.
+  tooBigMany: "{n} files exceed the build volume of their printer."
+  quantity: Qty
+  scale: Scale %
+  infill: Infill
+  supports: Supports
+  printer: Printer
+  interior: Interior
+  solid: Solid
+  hollow: Hollow
+  maxFiles: "You can upload up to {max} files at a time."
+  onlyFirst: "Only the first {n} files were uploaded: the limit is {max}."
+  analyzing: "Analysing {name}…"
+  queued: " ({n} more in queue)"
+  notStl: "{name}: not an .stl file."
+  tooLarge: "{name}: larger than {mb} MB."
+  cantRead: "{name}: could not be read."
+  hintSmall: "Smaller than 5 mm: check the file units."
+  hintLarge: "Larger than 2 metres: check the file units."
+  buildArea: "Build volume {dims} mm"
+  enclosed: ", enclosed printer"
+  filament: Filament
+  resin: Resin
+  resinLayer: " · resin {n}"
+  otherBrand: Other
+  ariaShow: "Show {name} in preview"
+  ariaTech: "Technology ({name})"
+  ariaBrand: "Printer brand ({name})"
+  ariaModel: "Printer model ({name})"
+  ariaRemove: "Remove {name}"

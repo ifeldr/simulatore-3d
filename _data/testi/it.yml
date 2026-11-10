@@ -1,0 +1,109 @@
+# Testi della versione italiana del simulatore (indirizzo: /simulatore-3d/it/)
+# Le parole tra graffe, come {name}, vengono sostituite dal simulatore: lasciale come sono.
+lingua: it
+locale: it-IT
+titolo: Simulatore stampa 3D
+descrizione: Carica i tuoi file STL e calcola subito peso, tempo e costo della stampa 3D, a filamento o a resina.
+h1: Simulatore 3D
+sottotitolo: "Carica uno o più file STL e scegli materiale, riempimento e supporti per ciascuno: peso, tempo di stampa e costo si aggiornano subito. I file restano sul tuo computer, perché l'analisi avviene nel browser."
+torna_al_sito: "← Torna al sito"
+lingua_selettore: Lingua
+caffe_risultato: "Ti è stato utile? Offrimi un caffè ☕"
+caffe_piede: "☕ Offrimi un caffè"
+
+pagina:
+  aria_anteprima: Anteprima e file caricati
+  aria_canvas: Anteprima 3D del file selezionato
+  trascina_titolo: Trascina qui i tuoi file STL
+  trascina_sotto: "Puoi caricarne più di uno insieme. I file restano sul tuo computer: l'analisi avviene nel browser."
+  scegli_file: Scegli i file
+  ruota: Trascina per ruotare
+  col_file: File
+  col_materiale: Materiale
+  col_pezzi: Pezzi
+  col_scala: Scala %
+  aggiungi_file: Aggiungi altri file
+  aria_opzioni: Opzioni e costo
+  titolo_calcolo: Quanto costa stamparlo
+  impostazioni_nuovi: Impostazioni per i nuovi file
+  applica_tutti: Applica a tutti
+  impostazioni_aiuto: Ogni file caricato parte da queste impostazioni. Puoi cambiarle file per file nell'elenco.
+  tecnologia: Tecnologia
+  marca: Marca
+  modello: Modello
+  materiale: Materiale
+  riempimento: Riempimento interno
+  svuotati: Pezzi svuotati (meno resina, servono fori di drenaggio)
+  supporti: Con supporti
+  qualita: Qualità
+  unita: Unità dei file
+  millimetri: Millimetri
+  centimetri: Centimetri
+  pollici: Pollici
+  valuta: Valuta
+  euro: Euro (€)
+  dollari: Dollari ($)
+  energia: Energia
+  vuoto: Carica uno o più file STL per vedere peso, tempo di stampa e costo.
+  pezzi: Pezzi
+  peso_totale: Peso totale
+  tempo_totale: Tempo totale
+  costo_totale: Costo totale
+  calcola: Calcola
+  nota: Stima indicativa calcolata sulla geometria dei file.
+
+js:
+  notAvailable: " (non disponibile)"
+  errBinary: File STL binario non valido o incompleto.
+  errNoTriangles: Nessun triangolo trovato nel file.
+  errNoVolume: il modello non ha volume, verifica che la mesh sia chiusa.
+  errInvalid: file STL non valido.
+  mlResin: "{n} ml di resina"
+  each: "{price} a pezzo"
+  thisPrinter: questa stampante
+  warnTooBig: "Supera l'area di stampa di {printer}: riduci la scala o scegli una stampante più grande."
+  warnMaterial: "{material} non si stampa su {printer}: scegli un altro materiale o un'altra stampante."
+  rowMaterial: "Materiale {name}"
+  rowWear: Usura stampante
+  rowEnergy: "Energia elettrica ({kwh} kWh)"
+  rowPost: Lavaggio e polimerizzazione resina
+  rowDiscount: "Sconto quantità {pct}%"
+  rowSetup: Preparazione
+  rowMinimum: Adeguamento a ordine minimo
+  rowVat: "IVA {pct}%"
+  totalVat: Totale IVA inclusa
+  total: Costo totale
+  oneFile: 1 file
+  manyFiles: "{n} file"
+  wrongMatOne: Un file usa un materiale che la sua stampante non supporta.
+  wrongMatMany: "{n} file usano materiali che la loro stampante non supporta."
+  tooBigOne: Un file supera l'area di stampa della sua stampante.
+  tooBigMany: "{n} file superano l'area di stampa della loro stampante."
+  quantity: Pezzi
+  scale: Scala %
+  infill: Riempimento
+  supports: Supporti
+  printer: Stampante
+  interior: Interno
+  solid: Pieno
+  hollow: Svuotato
+  maxFiles: "Puoi caricare al massimo {max} file alla volta."
+  onlyFirst: "Caricati solo i primi {n} file: il limite è {max}."
+  analyzing: "Analisi di {name}…"
+  queued: " (altri {n} in coda)"
+  notStl: "{name}: non è un file .stl."
+  tooLarge: "{name}: supera {mb} MB."
+  cantRead: "{name}: impossibile leggerlo."
+  hintSmall: "Misura meno di 5 mm: controlla l'unità dei file."
+  hintLarge: "Supera i 2 metri: controlla l'unità dei file."
+  buildArea: "Area di stampa {dims} mm"
+  enclosed: ", stampante chiusa"
+  filament: Filamento
+  resin: Resina
+  resinLayer: " · resina {n}"
+  otherBrand: Altre
+  ariaShow: "Mostra {name} in anteprima"
+  ariaTech: "Tecnologia ({name})"
+  ariaBrand: "Marca della stampante ({name})"
+  ariaModel: "Modello della stampante ({name})"
+  ariaRemove: "Rimuovi {name}"

@@ -1,51 +1,36 @@
 ---
 layout: null
 ---
+{%- comment -%}
+  Indirizzo principale del simulatore: porta alla versione nella lingua giusta.
+  1. lingua scelta in precedenza con il selettore IT | EN (salvata nel browser);
+  2. altrimenti la lingua del browser: italiano -> /it/, tutte le altre -> /en/.
+{%- endcomment -%}
 <!doctype html>
-<html lang="{{ site.lang | default: 'it' }}">
+<html lang="it">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{{ site.title }} · {{ site.sito_principale.nome }}</title>
-<meta name="description" content="{{ site.description }}">
-<link rel="canonical" href="{{ site.url }}{{ site.baseurl }}/">
-<meta property="og:title" content="{{ site.title }}">
-<meta property="og:description" content="{{ site.description }}">
-<meta property="og:url" content="{{ site.url }}{{ site.baseurl }}/">
-<meta property="og:type" content="website">
+<title>Simulatore stampa 3D · 3D print cost calculator</title>
+<meta name="robots" content="noindex">
+<link rel="alternate" hreflang="it" href="{{ site.url }}{{ site.baseurl }}/it/">
+<link rel="alternate" hreflang="en" href="{{ site.url }}{{ site.baseurl }}/en/">
 <link rel="icon" href="{{ '/assets/favicon.svg' | relative_url }}" type="image/svg+xml">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&display=swap">
-<link rel="stylesheet" href="{{ '/assets/pagina.css' | relative_url }}">
+<script>
+(function () {
+  var lingua = null;
+  try { lingua = localStorage.getItem('c3d-lingua'); } catch (e) {}
+  if (lingua !== 'it' && lingua !== 'en') {
+    var l = ((navigator.languages && navigator.languages[0]) || navigator.language || '').toLowerCase();
+    lingua = l.indexOf('it') === 0 ? 'it' : 'en';
+  }
+  location.replace({{ '/' | relative_url | jsonify }}.replace(/\/?$/, '/') + lingua + '/' + location.search + location.hash);
+})();
+</script>
+<style>body{font-family:system-ui,sans-serif;max-width:32em;margin:15vh auto;padding:0 20px;line-height:1.6}</style>
 </head>
 <body>
-<header class="testata">
-  <div class="contenitore testata-riga">
-    <a class="marchio" href="{{ site.sito_principale.url }}">
-      <svg viewBox="0 0 64 64" aria-hidden="true"><g fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"><path d="M32 8 54 20v24L32 56 10 44V20z"/><path d="M10 20l22 12 22-12M32 32v24"/></g></svg>
-      <span>{{ site.sito_principale.nome }}</span>
-    </a>
-    <a class="indietro" href="{{ site.sito_principale.url }}">← Torna al sito</a>
-  </div>
-</header>
-
-<main class="contenitore">
-  <h1>Simulatore 3D</h1>
-  <p class="sottotitolo">Carica uno o più file STL e scegli materiale, riempimento e supporti per ciascuno: peso, tempo di stampa e costo si aggiornano subito. I file restano sul tuo computer, perché l'analisi avviene nel browser.</p>
-
-  {% include calcolatore-3d.html %}
-
-</main>
-
-<footer class="piede">
-  <div class="contenitore piede-riga">
-    <p>© {{ site.time | date: "%Y" }} <a href="{{ site.sito_principale.url }}">{{ site.sito_principale.nome }}</a></p>
-    <p><a href="mailto:{{ site.data.calcolatore_3d.email_preventivi }}">{{ site.data.calcolatore_3d.email_preventivi }}</a></p>
-    {%- if site.caffe_url and site.caffe_url != "" %}
-    <p><a href="{{ site.caffe_url }}" target="_blank" rel="noopener">☕ Offrimi un caffè</a></p>
-    {%- endif %}
-  </div>
-</footer>
+<p><a href="{{ '/it/' | relative_url }}" hreflang="it">Simulatore stampa 3D in italiano</a></p>
+<p lang="en"><a href="{{ '/en/' | relative_url }}" hreflang="en">3D print cost calculator in English</a></p>
 </body>
 </html>

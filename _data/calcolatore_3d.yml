@@ -19,6 +19,11 @@ ricarico_percento: 0        # ricarico su materiale e usura (0 = costo reale)
 scarto_percento: 5          # materiale perso in spurghi, skirt e prove
 iva_percento: 0             # 0 = nessuna IVA
 
+# ---------- Valuta ----------
+# Tutti gli importi di questo file sono in euro. Se il visitatore sceglie i dollari, il simulatore
+# li converte con questo cambio (1 € = X $). Cambio di riferimento al 9 novembre 2026: 1,12.
+cambio_eur_usd: 1.12
+
 # ---------- Sconti quantità ----------
 # Servono solo per vendere: per aggiungerli, vedi l'esempio commentato.
 # sconti_quantita:
@@ -31,6 +36,7 @@ sconti_quantita: []
 # velocita rispetto al PLA: 1 = uguale, 0.5 = metà velocità
 # colore: colore dell'anteprima 3D, in esadecimale tra virgolette
 # descrizione: testo mostrato nella pagina (facoltativo)
+# nome_en: nome nella versione inglese del simulatore (facoltativo: se manca si usa nome)
 # Il primo materiale è quello proposto di default.
 materiali:
   - nome: PLA
@@ -52,12 +58,14 @@ materiali:
     velocita: 0.9
     colore: "#A9AEB6"
   - nome: ASA (per esterni)
+    nome_en: ASA (outdoor)
     descrizione: "Simile all'ABS ma resiste ai raggi UV: la scelta giusta per i pezzi che stanno all'aperto."
     densita: 1.07
     prezzo_kg: 32
     velocita: 0.9
     colore: "#D8CDB4"
   - nome: TPU (flessibile)
+    nome_en: TPU (flexible)
     descrizione: "Gommoso ed elastico: guarnizioni, protezioni, piedini antiscivolo."
     densita: 1.21
     prezzo_kg: 40
@@ -67,30 +75,35 @@ materiali:
   # Resine (tecnologia: resina): compaiono solo con le stampanti a resina.
   # densita in g/ml, prezzo_kg in € per kg (le resine si vendono di solito in flaconi da 1 kg)
   - nome: Resina standard
+    nome_en: Standard resin
     tecnologia: resina
     descrizione: "Dettaglio finissimo e superficie liscia: miniature, figure, gioielli da fusione."
     densita: 1.10
     prezzo_kg: 30
     colore: "#9AA3AE"
   - nome: Resina ABS-like
+    nome_en: ABS-like resin
     tecnologia: resina
     descrizione: "Più tenace e meno fragile della standard, per pezzi che vengono maneggiati."
     densita: 1.10
     prezzo_kg: 38
     colore: "#5E6670"
   - nome: Resina lavabile in acqua
+    nome_en: Water-washable resin
     tecnologia: resina
     descrizione: "Si lava con acqua invece che con alcol: pratica, con resa simile alla standard."
     densita: 1.10
     prezzo_kg: 35
     colore: "#C9B79C"
   - nome: Resina trasparente
+    nome_en: Clear resin
     tecnologia: resina
     descrizione: "Trasparente dopo la lucidatura: lenti, diffusori, pezzi decorativi."
     densita: 1.12
     prezzo_kg: 40
     colore: "#CFE6EE"
   - nome: Resina tough
+    nome_en: Tough resin
     tecnologia: resina
     descrizione: "Resistente agli urti, per pezzi meccanici con dettaglio fine."
     densita: 1.15
@@ -105,15 +118,18 @@ materiali:
 #   qualche stima con il tempo indicato dal tuo slicer.
 qualita:
   - nome: Bozza
+    nome_en: Draft
     strato_mm: 0.28
     strato_resina_mm: 0.10
     portata_mm3s: 9
   - nome: Standard
+    nome_en: Standard
     strato_mm: 0.20
     strato_resina_mm: 0.05
     portata_mm3s: 6
     predefinita: true
   - nome: Fine
+    nome_en: Fine
     strato_mm: 0.12
     strato_resina_mm: 0.03
     portata_mm3s: 3.5
@@ -153,6 +169,7 @@ cambio_strato_secondi: 2
 #   materiali:      materiali che può stampare, con i nomi usati sopra (basta la prima parola).
 #                   Se ometti la riga, la stampante accetta tutti i materiali.
 #   note:           testo facoltativo mostrato sotto il menu
+#   note_en:        la stessa nota per la versione inglese (facoltativa: se manca si usa note)
 #   predefinita:    true per la stampante proposta all'apertura della pagina
 #   tecnologia:     "resina" per le stampanti a resina (se manca: filamento). Per queste stampanti
 #                   il tempo dipende dall'altezza del pezzo: secondi_strato = secondi per ogni strato
@@ -169,6 +186,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto, ideale per pezzi piccoli. Max 500 mm/s."
+    note_en: "Open frame, ideal for small parts. Max 500 mm/s."
   - marca: Bambu Lab
     nome: A1
     area_stampa_mm: [256, 256, 256]
@@ -178,6 +196,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
     predefinita: true
   - marca: Bambu Lab
     nome: A2L
@@ -188,6 +207,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto, grande formato. Max 500 mm/s."
+    note_en: "Open frame, large format. Max 500 mm/s."
   - marca: Bambu Lab
     nome: P2S
     area_stampa_mm: [256, 256, 256]
@@ -196,6 +216,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "Chiusa, adatta anche ad ABS e ASA. Max 600 mm/s."
+    note_en: "Enclosed, also suitable for ABS and ASA. Max 600 mm/s."
   - marca: Bambu Lab
     nome: X2D
     area_stampa_mm: [256, 256, 260]
@@ -204,6 +225,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "Doppio ugello, camera riscaldata a 65 °C."
+    note_en: "Dual nozzle, chamber heated to 65 °C."
   - marca: Bambu Lab
     nome: H2S
     area_stampa_mm: [340, 320, 340]
@@ -212,6 +234,7 @@ stampanti:
     velocita: 1.6
     chiusa: true
     note: "Grande formato, camera riscaldata a 65 °C. Max 1000 mm/s."
+    note_en: "Large format, chamber heated to 65 °C. Max 1000 mm/s."
   - marca: Bambu Lab
     nome: H2D
     area_stampa_mm: [350, 320, 325]
@@ -220,6 +243,7 @@ stampanti:
     velocita: 1.6
     chiusa: true
     note: "Doppio ugello, camera riscaldata a 65 °C. Max 1000 mm/s."
+    note_en: "Dual nozzle, chamber heated to 65 °C. Max 1000 mm/s."
   - marca: Bambu Lab
     nome: H2D Pro
     area_stampa_mm: [350, 320, 325]
@@ -228,6 +252,7 @@ stampanti:
     velocita: 1.6
     chiusa: true
     note: "Versione professionale della H2D, camera riscaldata a 65 °C."
+    note_en: "Professional version of the H2D, chamber heated to 65 °C."
   - marca: Bambu Lab
     nome: H2C
     area_stampa_mm: [330, 320, 325]
@@ -236,6 +261,7 @@ stampanti:
     velocita: 1.6
     chiusa: true
     note: "Sistema multi-materiale Vortek, camera riscaldata a 65 °C."
+    note_en: "Vortek multi-material system, chamber heated to 65 °C."
   - marca: Bambu Lab
     nome: H3C
     area_stampa_mm: [330, 320, 325]
@@ -244,6 +270,7 @@ stampanti:
     velocita: 1.7
     chiusa: true
     note: "Cambio utensile a 9 teste, camera riscaldata a 65 °C. Max 1400 mm/s."
+    note_en: "9-head tool changer, chamber heated to 65 °C. Max 1400 mm/s."
   - marca: Bambu Lab
     nome: P1P
     area_stampa_mm: [256, 256, 256]
@@ -253,6 +280,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Fuori produzione."
+    note_en: "Open frame. Discontinued."
   - marca: Bambu Lab
     nome: P1S
     area_stampa_mm: [256, 256, 256]
@@ -261,6 +289,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "Chiusa, adatta anche ad ABS e ASA. Fuori produzione."
+    note_en: "Enclosed, also suitable for ABS and ASA. Discontinued."
   - marca: Bambu Lab
     nome: X1 Carbon
     area_stampa_mm: [256, 256, 256]
@@ -269,6 +298,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "Chiusa, adatta anche ad ABS e ASA. Fuori produzione."
+    note_en: "Enclosed, also suitable for ABS and ASA. Discontinued."
   - marca: Bambu Lab
     nome: X1E
     area_stampa_mm: [256, 256, 256]
@@ -277,6 +307,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "Camera riscaldata, per materiali tecnici. Fuori produzione."
+    note_en: "Heated chamber, for engineering materials. Discontinued."
   - marca: Prusa
     nome: MINI+
     area_stampa_mm: [180, 180, 180]
@@ -286,6 +317,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto, formato compatto."
+    note_en: "Open frame, compact format."
   - marca: Prusa
     nome: MK4S
     area_stampa_mm: [250, 210, 220]
@@ -295,6 +327,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto."
+    note_en: "Open frame."
   - marca: Prusa
     nome: CORE One+
     area_stampa_mm: [250, 220, 270]
@@ -303,6 +336,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "CoreXY chiusa, camera fino a 55 °C."
+    note_en: "Enclosed CoreXY, chamber up to 55 °C."
   - marca: Prusa
     nome: CORE One L
     area_stampa_mm: [300, 300, 330]
@@ -311,6 +345,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "CoreXY chiusa grande formato, camera fino a 60 °C."
+    note_en: "Large-format enclosed CoreXY, chamber up to 60 °C."
   - marca: Prusa
     nome: XL
     area_stampa_mm: [360, 360, 360]
@@ -320,6 +355,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Grande formato, fino a 5 teste (cambio utensile)."
+    note_en: "Large format, up to 5 heads (tool changer)."
   - marca: Creality
     nome: Ender-3 V3 SE
     area_stampa_mm: [220, 220, 250]
@@ -329,6 +365,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 250 mm/s."
+    note_en: "Open frame. Max 250 mm/s."
   - marca: Creality
     nome: Ender-3 V3 KE
     area_stampa_mm: [220, 220, 240]
@@ -338,6 +375,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
   - marca: Creality
     nome: Ender-3 V3
     area_stampa_mm: [220, 220, 250]
@@ -347,6 +385,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "CoreXZ a telaio aperto. Max 600 mm/s."
+    note_en: "Open-frame CoreXZ. Max 600 mm/s."
   - marca: Creality
     nome: Ender-3 V3 Neo
     area_stampa_mm: [220, 220, 220]
@@ -356,6 +395,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
   - marca: Creality
     nome: Ender-3 V3 Mega
     area_stampa_mm: [420, 420, 420]
@@ -365,6 +405,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Grande formato a telaio aperto. Max 500 mm/s."
+    note_en: "Large-format open frame. Max 500 mm/s."
   - marca: Creality
     nome: Ender-5 Max
     area_stampa_mm: [400, 400, 400]
@@ -374,6 +415,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Grande formato, chiusura opzionale. Max 700 mm/s."
+    note_en: "Large format, optional enclosure. Max 700 mm/s."
   - marca: Creality
     nome: Hi
     area_stampa_mm: [260, 260, 300]
@@ -383,6 +425,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
   - marca: Creality
     nome: SPARKX i7
     area_stampa_mm: [260, 260, 255]
@@ -392,6 +435,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto."
+    note_en: "Open frame."
   - marca: Creality
     nome: SPARKX i8
     area_stampa_mm: [260, 260, 255]
@@ -401,6 +445,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
   - marca: Creality
     nome: K2 SE
     area_stampa_mm: [220, 215, 245]
@@ -410,6 +455,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "CoreXY a telaio aperto. Max 500 mm/s."
+    note_en: "Open-frame CoreXY. Max 500 mm/s."
   - marca: Creality
     nome: K2
     area_stampa_mm: [260, 260, 260]
@@ -418,6 +464,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "CoreXY chiusa. Max 600 mm/s."
+    note_en: "Enclosed CoreXY. Max 600 mm/s."
   - marca: Creality
     nome: K2 Pro
     area_stampa_mm: [300, 300, 300]
@@ -426,6 +473,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "CoreXY chiusa, camera riscaldata a 60 °C."
+    note_en: "Enclosed CoreXY, chamber heated to 60 °C."
   - marca: Creality
     nome: K2 Plus
     area_stampa_mm: [350, 350, 350]
@@ -434,6 +482,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "CoreXY chiusa, camera riscaldata a 60 °C."
+    note_en: "Enclosed CoreXY, chamber heated to 60 °C."
   - marca: Creality
     nome: K3
     area_stampa_mm: [260, 260, 260]
@@ -443,6 +492,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Cambio ugello multi-materiale; ABS e ASA solo con la copertura superiore."
+    note_en: "Multi-material nozzle changer; ABS and ASA only with the top cover."
   - marca: Elegoo
     nome: Neptune 4
     area_stampa_mm: [225, 225, 265]
@@ -452,6 +502,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
   - marca: Elegoo
     nome: Neptune 4 Pro
     area_stampa_mm: [225, 225, 265]
@@ -461,6 +512,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 500 mm/s."
+    note_en: "Open frame. Max 500 mm/s."
   - marca: Elegoo
     nome: Neptune 4 Plus
     area_stampa_mm: [320, 320, 385]
@@ -470,6 +522,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Grande formato a telaio aperto. Max 500 mm/s."
+    note_en: "Large-format open frame. Max 500 mm/s."
   - marca: Elegoo
     nome: Neptune 4 Max
     area_stampa_mm: [420, 420, 480]
@@ -479,6 +532,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Grande formato a telaio aperto. Max 500 mm/s."
+    note_en: "Large-format open frame. Max 500 mm/s."
   - marca: Elegoo
     nome: Centauri Carbon
     area_stampa_mm: [256, 256, 256]
@@ -487,6 +541,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "CoreXY chiusa. Max 500 mm/s."
+    note_en: "Enclosed CoreXY. Max 500 mm/s."
   - marca: Elegoo
     nome: Centauri Carbon 2
     area_stampa_mm: [256, 256, 256]
@@ -495,6 +550,7 @@ stampanti:
     velocita: 1.4
     chiusa: true
     note: "CoreXY chiusa, multi-materiale, ugello fino a 350 °C."
+    note_en: "Enclosed CoreXY, multi-material, nozzle up to 350 °C."
   - marca: Elegoo
     nome: OrangeStorm Giga
     area_stampa_mm: [800, 800, 1000]
@@ -504,6 +560,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Formato gigante, multi-ugello. Max 300 mm/s."
+    note_en: "Giant format, multi-nozzle. Max 300 mm/s."
   - marca: Anycubic
     nome: Kobra 3 V2
     area_stampa_mm: [255, 255, 260]
@@ -513,6 +570,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Telaio aperto. Max 600 mm/s."
+    note_en: "Open frame. Max 600 mm/s."
   - marca: Anycubic
     nome: Kobra 3 Max V2
     area_stampa_mm: [420, 420, 500]
@@ -522,6 +580,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Grande formato a telaio aperto. Max 600 mm/s."
+    note_en: "Large-format open frame. Max 600 mm/s."
   - marca: Anycubic
     nome: Kobra 4
     area_stampa_mm: [260, 260, 260]
@@ -531,6 +590,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Max 600 mm/s."
+    note_en: "Max 600 mm/s."
   - marca: Anycubic
     nome: Kobra X
     area_stampa_mm: [260, 260, 260]
@@ -540,6 +600,7 @@ stampanti:
     chiusa: false
     materiali: [PLA, PETG, TPU]
     note: "Multi-colore. Max 600 mm/s."
+    note_en: "Multi-color. Max 600 mm/s."
   - marca: Anycubic
     nome: Kobra S1
     area_stampa_mm: [250, 250, 250]
@@ -548,6 +609,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "CoreXY chiusa. Max 600 mm/s."
+    note_en: "Enclosed CoreXY. Max 600 mm/s."
   - marca: Anycubic
     nome: Kobra S1 Max
     area_stampa_mm: [350, 350, 350]
@@ -556,6 +618,7 @@ stampanti:
     velocita: 1.5
     chiusa: true
     note: "CoreXY chiusa, camera riscaldata a 65 °C."
+    note_en: "Enclosed CoreXY, chamber heated to 65 °C."
 
   # ---------- Stampanti a resina ----------
   - marca: Elegoo
@@ -567,6 +630,7 @@ stampanti:
     secondi_strato: 5.5
     chiusa: true
     note: "Formato piccolo. Max 70 mm/h."
+    note_en: "Small format. Max 70 mm/h."
   - marca: Elegoo
     nome: Mars 5 Ultra
     tecnologia: resina
@@ -576,6 +640,7 @@ stampanti:
     secondi_strato: 3.5
     chiusa: true
     note: "Formato piccolo, rilascio inclinato. Max 150 mm/h."
+    note_en: "Small format, tilted release. Max 150 mm/h."
   - marca: Elegoo
     nome: Saturn 4
     tecnologia: resina
@@ -585,6 +650,7 @@ stampanti:
     secondi_strato: 5.5
     chiusa: true
     note: "Formato medio. Max 70 mm/h."
+    note_en: "Medium format. Max 70 mm/h."
   - marca: Elegoo
     nome: Saturn 4 Ultra 16K
     tecnologia: resina
@@ -594,6 +660,7 @@ stampanti:
     secondi_strato: 4.0
     chiusa: true
     note: "Formato medio, 16K, vasca riscaldata. Max 150 mm/h."
+    note_en: "Medium format, 16K, heated vat. Max 150 mm/h."
   - marca: Elegoo
     nome: Jupiter 2
     tecnologia: resina
@@ -603,6 +670,7 @@ stampanti:
     secondi_strato: 6.0
     chiusa: true
     note: "Grande formato, riscaldamento resina. Max 90 mm/h."
+    note_en: "Large format, resin heating. Max 90 mm/h."
   - marca: Anycubic
     nome: Photon Mono 4 Ultra
     tecnologia: resina
@@ -612,6 +680,7 @@ stampanti:
     secondi_strato: 4.5
     chiusa: true
     note: "Formato piccolo. Fino a 80 mm/h con resina standard (strato 0,1 mm)."
+    note_en: "Small format. Up to 80 mm/h with standard resin (0.1 mm layer)."
   - marca: Anycubic
     nome: Photon Mono M7 Pro
     tecnologia: resina
@@ -621,6 +690,7 @@ stampanti:
     secondi_strato: 3.5
     chiusa: true
     note: "Formato medio, vasca riscaldata. Fino a 130 mm/h con resina standard (strato 0,1 mm)."
+    note_en: "Medium format, heated vat. Up to 130 mm/h with standard resin (0.1 mm layer)."
   - marca: Anycubic
     nome: Photon Mono M7 Max
     tecnologia: resina
@@ -630,6 +700,7 @@ stampanti:
     secondi_strato: 6.5
     chiusa: true
     note: "Grande formato."
+    note_en: "Large format."
   - marca: Anycubic
     nome: Photon P1
     tecnologia: resina
@@ -639,6 +710,7 @@ stampanti:
     secondi_strato: 6.0
     chiusa: true
     note: "Formato medio, vasca riscaldata. 25–35 mm/h con resina standard (strato 0,05 mm)."
+    note_en: "Medium format, heated vat. 25–35 mm/h with standard resin (0.05 mm layer)."
   - marca: Anycubic
     nome: Photon P1 Max
     tecnologia: resina
@@ -648,6 +720,7 @@ stampanti:
     secondi_strato: 9.0
     chiusa: true
     note: "Grande formato, vasca riscaldata. 15–25 mm/h con resina standard (strato 0,05 mm)."
+    note_en: "Large format, heated vat. 15–25 mm/h with standard resin (0.05 mm layer)."
   - marca: Creality
     nome: HALOT-X1 Neo
     tecnologia: resina
@@ -657,6 +730,7 @@ stampanti:
     secondi_strato: 5.0
     chiusa: true
     note: "Formato piccolo, 9K."
+    note_en: "Small format, 9K."
   - marca: Creality
     nome: HALOT-X1
     tecnologia: resina
@@ -666,6 +740,7 @@ stampanti:
     secondi_strato: 3.5
     chiusa: true
     note: "Formato medio, 16K. Max 170 mm/h."
+    note_en: "Medium format, 16K. Max 170 mm/h."
   - marca: Creality
     nome: HALOT-MAGE S
     tecnologia: resina
@@ -675,3 +750,4 @@ stampanti:
     secondi_strato: 4.0
     chiusa: true
     note: "Formato medio, 14K. Max 150 mm/h."
+    note_en: "Medium format, 14K. Max 150 mm/h."
