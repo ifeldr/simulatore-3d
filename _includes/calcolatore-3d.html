@@ -1,5 +1,5 @@
 {%- comment -%}
-  Calcolatore costo stampa 3D da file STL.
+  Calcolatore costo stampa 3D da file STL, 3MF e G-code.
   Uso: incluso da _layouts/simulatore.html, con la lingua della pagina (page.lingua).
   Prezzi e parametri: _data/calcolatore_3d.yml. Testi: _data/testi/it.yml ed en.yml.
 {%- endcomment -%}
@@ -13,6 +13,8 @@
     <section aria-label="{{ t.aria_anteprima }}">
       <div class="c3d-plate" id="c3d-plate">
         <canvas id="c3d-canvas" aria-label="{{ t.aria_canvas }}" hidden></canvas>
+        <img class="c3d-thumb" id="c3d-thumb" alt="{{ t.aria_miniatura }}" hidden>
+        <p class="c3d-nothumb" id="c3d-nothumb" hidden>{{ t.senza_anteprima }}</p>
         <div class="c3d-drop" id="c3d-drop">
           <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round" aria-hidden="true">
             <path d="M32 6 54 18v28L32 58 10 46V18z"/><path d="M10 18l22 12 22-12M32 30v28"/>
@@ -25,7 +27,7 @@
         <div class="c3d-overlay" id="c3d-overlay" hidden>
           <div><div class="c3d-fname" id="c3d-fname"></div><div class="c3d-dims" id="c3d-dims"></div></div>
         </div>
-        <input type="file" id="c3d-file" accept=".stl,model/stl,application/sla" multiple hidden>
+        <input type="file" id="c3d-file" accept=".stl,.3mf,.gcode,.gco,.g,.bgcode,model/stl,application/sla,model/3mf" multiple hidden>
       </div>
       <p class="c3d-msg" id="c3d-msg" role="status" aria-live="polite"></p>
       <div id="c3d-list-wrap" hidden>

@@ -3,9 +3,9 @@
 lingua: en
 locale: en-US
 titolo: 3D print cost calculator
-descrizione: Upload your STL files and instantly calculate weight, time and cost of a 3D print, filament or resin.
+descrizione: Upload your STL, 3MF or G-code files and instantly get the weight, time and cost of a 3D print, filament or resin.
 h1: 3D print cost calculator
-sottotitolo: "Upload one or more STL files and choose material, infill and supports for each: weight, print time and cost update instantly. Your files stay on your computer, because everything is analysed in the browser."
+sottotitolo: "Upload one or more STL, 3MF or G-code files and choose material, infill and supports for each: weight, print time and cost update instantly. With a G-code or a sliced 3MF, time and grams are the real ones from your slicer. Your files stay on your computer, because everything is analysed in the browser."
 torna_al_sito: "← Back to site"
 lingua_selettore: Language
 caffe_risultato: "Was this useful? Buy me a coffee ☕"
@@ -14,7 +14,9 @@ caffe_piede: "☕ Buy me a coffee"
 pagina:
   aria_anteprima: Preview and uploaded files
   aria_canvas: 3D preview of the selected file
-  trascina_titolo: Drop your STL files here
+  aria_miniatura: Thumbnail saved by the slicer
+  senza_anteprima: "This G-code has no thumbnail: the cost uses the slicer data."
+  trascina_titolo: Drop your STL, 3MF or G-code files here
   trascina_sotto: "You can upload several at once. Your files stay on your computer: everything is analysed in the browser."
   scegli_file: Choose files
   ruota: Drag to rotate
@@ -46,7 +48,7 @@ pagina:
   euro: Euro (€)
   dollari: US dollar ($)
   energia: Electricity
-  vuoto: Upload one or more STL files to see weight, print time and cost.
+  vuoto: Upload one or more STL, 3MF or G-code files to see weight, print time and cost.
   pezzi: Parts
   peso_totale: Total weight
   tempo_totale: Total time
@@ -61,7 +63,7 @@ js:
   errBinary: Invalid or incomplete binary STL file.
   errNoTriangles: No triangles found in the file.
   errNoVolume: the model has no volume, check that the mesh is closed.
-  errInvalid: invalid STL file.
+  errInvalid: invalid file.
   mlResin: "{n} ml of resin"
   each: "{price} each"
   thisPrinter: this printer
@@ -95,7 +97,7 @@ js:
   onlyFirst: "Only the first {n} files were uploaded: the limit is {max}."
   analyzing: "Analysing {name}…"
   queued: " ({n} more in queue)"
-  notStl: "{name}: not an .stl file."
+  notStl: "{name}: not an STL, 3MF or G-code file."
   tooLarge: "{name}: larger than {mb} MB."
   cantRead: "{name}: could not be read."
   hintSmall: "Smaller than 5 mm: check the file units."
@@ -156,10 +158,21 @@ js:
   xlsColPrinterId: Printer code
   xlsColMaterialId: Material code
   xlsNoteEstimate: "Rough estimate based on the geometry of the files. The total also includes printer warm-up, which isn't split across the individual files."
-  xlsNoteImport: "You can change parts, scale, infill, interior, supports, material and printer in the Files sheet and import it back into the simulator: the STL files must be uploaded again, with the same names."
+  xlsNoteImport: "You can change parts, scale, infill, interior, supports, material and printer in the Files sheet and import it back into the simulator: the files must be uploaded again, with the same names."
   priceSpool: Spool price
   priceResin: Resin price
   priceDefault: "Typical price: enter what you pay, it applies to every file in {material}."
   priceCustom: "Your price for {material}, remembered on this browser (default {def})."
   xlsPrices: "Material prices ({unit})"
   xlsPriceMine: my price
+  err3mf: invalid or damaged 3MF file.
+  err3mfBrowser: "this browser can't open 3MF files: update it or export the model as STL."
+  err3mfEmpty: the 3MF contains no printable models.
+  errGcode: "couldn't find the slicer's estimated time and filament in the G-code."
+  errBgcode: "couldn't find time and filament in the binary G-code: export it as text G-code (in PrusaSlicer turn off \"Binary G-code\" in the printer settings)."
+  slicedMeta: "from slicer: {time}, {g} g, {price} each"
+  slicedFile: Slicer data
+  plates: "{n} plates"
+  slicedNote: Infill, supports and scale are the ones set in the slicer.
+  slicedLocked: Scale is already set in the slicer file
+  slicedTech: G-code is filament only

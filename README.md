@@ -38,6 +38,21 @@ e il costo di lavaggio e polimerizzazione per ogni stampa.
 - Il visitatore sceglie tra euro e dollari in entrambe le lingue. Tutti gli importi del file sono in
   euro e vengono convertiti con `cambio_eur_usd` (1 € = X $): aggiornalo ogni tanto.
 
+## File supportati
+
+- **STL** (binario e ASCII): la stima si calcola dalla geometria, con materiale, riempimento, supporti e qualità scelti nella pagina.
+- **3MF di progetto** (Bambu Studio, OrcaSlicer, PrusaSlicer e altri): si leggono tutti gli oggetti da stampare con le loro
+  posizioni e l'unità di misura del file, poi la stima è come per l'STL. Se il progetto indica stampante e filamento,
+  vengono proposti in automatico.
+- **3MF già processato** (`.gcode.3mf` di Bambu Studio e Orca) e **G-code** (`.gcode`, `.gco`, `.g`, `.bgcode` di Prusa):
+  tempo e filamento sono quelli calcolati dallo slicer, per tutti i piatti del file. Scala, riempimento e supporti
+  sono già decisi nello slicer e non si modificano; si possono cambiare stampante (per usura ed energia), materiale
+  (per il prezzo) e numero di pezzi. Sono riconosciuti i commenti di PrusaSlicer, Bambu Studio, OrcaSlicer,
+  SuperSlicer, Cura, Simplify3D e ideaMaker. Se il G-code ha una miniatura, appare al posto dell'anteprima 3D.
+- Del G-code si leggono solo il primo e l'ultimo MB, dove gli slicer scrivono i dati riassuntivi, quindi anche file
+  molto grandi si aprono subito. Il 3MF si apre nel browser con `DecompressionStream`, senza librerie esterne.
+- I formati delle stampanti a resina già processati (`.ctb`, `.goo`, `.pwmx` e simili) non sono supportati: per la resina si usano STL o 3MF.
+
 ## Prezzo dei materiali
 
 - Accanto al materiale c'è il campo **Prezzo bobina** (o **Prezzo resina**) in €/kg o $/kg: chi usa il simulatore

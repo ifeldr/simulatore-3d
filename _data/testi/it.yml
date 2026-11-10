@@ -3,9 +3,9 @@
 lingua: it
 locale: it-IT
 titolo: Simulatore stampa 3D
-descrizione: Carica i tuoi file STL e calcola subito peso, tempo e costo della stampa 3D, a filamento o a resina.
+descrizione: Carica i tuoi file STL, 3MF o G-code e calcola subito peso, tempo e costo della stampa 3D, a filamento o a resina.
 h1: Simulatore 3D
-sottotitolo: "Carica uno o più file STL e scegli materiale, riempimento e supporti per ciascuno: peso, tempo di stampa e costo si aggiornano subito. I file restano sul tuo computer, perché l'analisi avviene nel browser."
+sottotitolo: "Carica uno o più file STL, 3MF o G-code e scegli materiale, riempimento e supporti per ciascuno: peso, tempo di stampa e costo si aggiornano subito. Con un G-code o un 3MF già processato dallo slicer, tempo e grammi sono quelli reali. I file restano sul tuo computer, perché l'analisi avviene nel browser."
 torna_al_sito: "← Torna al sito"
 lingua_selettore: Lingua
 caffe_risultato: "Ti è stato utile? Offrimi un caffè ☕"
@@ -14,7 +14,9 @@ caffe_piede: "☕ Offrimi un caffè"
 pagina:
   aria_anteprima: Anteprima e file caricati
   aria_canvas: Anteprima 3D del file selezionato
-  trascina_titolo: Trascina qui i tuoi file STL
+  aria_miniatura: Miniatura salvata dallo slicer
+  senza_anteprima: "Questo G-code non contiene una miniatura: il costo usa i dati dello slicer."
+  trascina_titolo: Trascina qui i tuoi file STL, 3MF o G-code
   trascina_sotto: "Puoi caricarne più di uno insieme. I file restano sul tuo computer: l'analisi avviene nel browser."
   scegli_file: Scegli i file
   ruota: Trascina per ruotare
@@ -46,7 +48,7 @@ pagina:
   euro: Euro (€)
   dollari: Dollari ($)
   energia: Energia
-  vuoto: Carica uno o più file STL per vedere peso, tempo di stampa e costo.
+  vuoto: Carica uno o più file STL, 3MF o G-code per vedere peso, tempo di stampa e costo.
   pezzi: Pezzi
   peso_totale: Peso totale
   tempo_totale: Tempo totale
@@ -61,7 +63,7 @@ js:
   errBinary: File STL binario non valido o incompleto.
   errNoTriangles: Nessun triangolo trovato nel file.
   errNoVolume: il modello non ha volume, verifica che la mesh sia chiusa.
-  errInvalid: file STL non valido.
+  errInvalid: file non valido.
   mlResin: "{n} ml di resina"
   each: "{price} a pezzo"
   thisPrinter: questa stampante
@@ -95,7 +97,7 @@ js:
   onlyFirst: "Caricati solo i primi {n} file: il limite è {max}."
   analyzing: "Analisi di {name}…"
   queued: " (altri {n} in coda)"
-  notStl: "{name}: non è un file .stl."
+  notStl: "{name}: non è un file STL, 3MF o G-code."
   tooLarge: "{name}: supera {mb} MB."
   cantRead: "{name}: impossibile leggerlo."
   hintSmall: "Misura meno di 5 mm: controlla l'unità dei file."
@@ -156,10 +158,21 @@ js:
   xlsColPrinterId: Codice stampante
   xlsColMaterialId: Codice materiale
   xlsNoteEstimate: "Stima indicativa calcolata sulla geometria dei file. Il totale comprende anche il riscaldamento delle stampanti, che non è ripartito sui singoli file."
-  xlsNoteImport: "Puoi modificare pezzi, scala, riempimento, interno, supporti, materiale e stampante nel foglio File e reimportarlo nel simulatore: i file STL vanno ricaricati, con lo stesso nome."
+  xlsNoteImport: "Puoi modificare pezzi, scala, riempimento, interno, supporti, materiale e stampante nel foglio File e reimportarlo nel simulatore: i file vanno ricaricati, con lo stesso nome."
   priceSpool: Prezzo bobina
   priceResin: Prezzo resina
   priceDefault: "Prezzo indicativo: metti quello che paghi tu, vale per tutti i file in {material}."
   priceCustom: "Il tuo prezzo per {material}, ricordato su questo browser (predefinito {def})."
   xlsPrices: "Prezzi dei materiali ({unit})"
   xlsPriceMine: il mio prezzo
+  err3mf: file 3MF non valido o danneggiato.
+  err3mfBrowser: "questo browser non riesce ad aprire i file 3MF: aggiornalo o esporta il modello in STL."
+  err3mfEmpty: il 3MF non contiene modelli da stampare.
+  errGcode: "nel G-code non ho trovato tempo e filamento stimati dallo slicer."
+  errBgcode: "nel G-code binario non ho trovato tempo e filamento: esporta il G-code in formato testo (in PrusaSlicer togli \"G-code binario\" nelle impostazioni della stampante)."
+  slicedMeta: "dallo slicer: {time}, {g} g, {price} a pezzo"
+  slicedFile: Dati dello slicer
+  plates: "{n} piatti"
+  slicedNote: Riempimento, supporti e scala sono quelli scelti nello slicer.
+  slicedLocked: La scala è già decisa nel file dello slicer
+  slicedTech: Un G-code si stampa solo a filamento

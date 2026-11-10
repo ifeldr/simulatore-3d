@@ -1,4 +1,4 @@
-/* Calcolatore costo stampa 3D da file STL, v1.7 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
+/* Calcolatore costo stampa 3D da file STL, v1.8 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
 (function () {
   'use strict';
   // Percorso di questo script: serve per caricare la libreria Excel che sta nella stessa cartella
@@ -202,6 +202,7 @@
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
     time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta'),
     price: $('c3d-price'), priceName: $('c3d-price-name'), priceUnit: $('c3d-price-unit'), priceHelp: $('c3d-price-help'), priceReset: $('c3d-price-reset'),
+    thumb: $('c3d-thumb'), nothumb: $('c3d-nothumb'),
     xlsOut: $('c3d-xls-out'), xlsIn: $('c3d-xls-in'), xlsFile: $('c3d-xls-file'), xlsMsg: $('c3d-xls-msg')
   };
 
@@ -363,7 +364,7 @@
         if (f) { m.materialId = f.id; m.row.matSel.value = f.id; }
       }
       var resin = techOf(printerOf(m)) === 'resina';
-      m.row.infLabel.hidden = resin; m.row.holLabel.hidden = !resin;
+      m.row.infLabel.hidden = resin || !!m.sliced; m.row.holLabel.hidden = !resin || !!m.sliced;
     });
     showPrice();
     var resinDef = techOf(printer()) === 'resina';
@@ -437,6 +438,347 @@
     return { tris: tris, vol: Math.abs(vol), area: area, min: min, max: max,
              size: [max[0] - min[0], max[1] - min[1], max[2] - min[2]] };
   }
+
+  // ---------- 3MF e G-code ----------
+  // Un 3MF è un archivio ZIP: lo si apre nel browser con DecompressionStream, senza librerie esterne.
+  function u16(b, o) { return b[o] | (b[o + 1] << 8); }
+  function u32(b, o) { return (b[o] | (b[o + 1] << 8) | (b[o + 2] << 16)) + b[o + 3] * 16777216; }
+  function readZip(buffer) {
+    var b = new Uint8Array(buffer), eocd = -1;
+    for (var i = b.length - 22; i >= Math.max(0, b.length - 65557); i--) {
+      if (b[i] === 0x50 && b[i + 1] === 0x4b && b[i + 2] === 0x05 && b[i + 3] === 0x06) { eocd = i; break; }
+    }
+    if (eocd < 0) throw new Error(T('err3mf'));
+    var count = u16(b, eocd + 10), off = u32(b, eocd + 16), entries = {};
+    // ZIP64: le posizioni stanno nel record "end of central directory" a 64 bit
+    if (off === 0xFFFFFFFF || count === 0xFFFF) {
+      var loc = eocd - 20;
+      if (loc >= 0 && u32(b, loc) === 0x07064b50) {
+        var z = u32(b, loc + 8);
+        if (u32(b, z) === 0x06064b50) { count = u32(b, z + 32); off = u32(b, z + 48); }
+      }
+    }
+    var dec = new TextDecoder();
+    for (var n = 0; n < count && off + 46 <= b.length; n++) {
+      if (u32(b, off) !== 0x02014b50) break;
+      var method = u16(b, off + 10), csize = u32(b, off + 20), usize = u32(b, off + 24);
+      var nlen = u16(b, off + 28), xlen = u16(b, off + 30), clen = u16(b, off + 32), lho = u32(b, off + 42);
+      var name = dec.decode(b.subarray(off + 46, off + 46 + nlen));
+      var x = off + 46 + nlen, xe = x + xlen;
+      while (x + 4 <= xe) {   // campo extra ZIP64
+        var id = u16(b, x), sz = u16(b, x + 2), p = x + 4;
+        if (id === 1) {
+          if (usize === 0xFFFFFFFF) { usize = u32(b, p) + u32(b, p + 4) * 4294967296; p += 8; }
+          if (csize === 0xFFFFFFFF) { csize = u32(b, p) + u32(b, p + 4) * 4294967296; p += 8; }
+          if (lho === 0xFFFFFFFF) { lho = u32(b, p) + u32(b, p + 4) * 4294967296; }
+        }
+        x += 4 + sz;
+      }
+      entries[name.replace(/^\/+/, '').toLowerCase()] = { name: name, method: method, csize: csize, usize: usize, lho: lho };
+      off = xe + clen;
+    }
+    function get(path) {
+      var e = entries[String(path).replace(/^\/+/, '').toLowerCase()];
+      if (!e) return Promise.resolve(null);
+      if (u32(b, e.lho) !== 0x04034b50) return Promise.reject(new Error(T('err3mf')));
+      var start = e.lho + 30 + u16(b, e.lho + 26) + u16(b, e.lho + 28);
+      var data = b.subarray(start, start + e.csize);
+      if (e.method === 0) return Promise.resolve(data);
+      if (e.method !== 8 || typeof DecompressionStream === 'undefined') return Promise.reject(new Error(T('err3mfBrowser')));
+      var ds = new DecompressionStream('deflate-raw');
+      var out = new Blob([data]).stream().pipeThrough(ds);
+      return new Response(out).arrayBuffer().then(function (ab) { return new Uint8Array(ab); });
+    }
+    function text(path) { return get(path).then(function (d) { return d ? new TextDecoder().decode(d) : null; }); }
+    return { names: Object.keys(entries).map(function (k) { return entries[k].name.replace(/^\/+/, ''); }), get: get, text: text };
+  }
+
+  function attrs(s) {
+    var o = {}, re = /([\w:.-]+)\s*=\s*"([^"]*)"|([\w:.-]+)\s*=\s*'([^']*)'/g, m;
+    while ((m = re.exec(s))) o[(m[1] || m[3]).toLowerCase()] = m[1] ? m[2] : m[4];
+    return o;
+  }
+  // Matrice 3MF (12 valori, convenzione a vettore riga): p' = p × M
+  var IDENT = [1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0];
+  function parseMatrix(t) {
+    if (!t) return IDENT;
+    var v = String(t).trim().split(/\s+/).map(Number);
+    return v.length === 12 && v.every(isFinite) ? v : IDENT;
+  }
+  function mulM(a, b) {   // prima a, poi b
+    var r = [];
+    for (var i = 0; i < 3; i++) for (var j = 0; j < 3; j++) r[i * 3 + j] = a[i * 3] * b[j] + a[i * 3 + 1] * b[3 + j] + a[i * 3 + 2] * b[6 + j];
+    for (var k = 0; k < 3; k++) r[9 + k] = a[9] * b[k] + a[10] * b[3 + k] + a[11] * b[6 + k] + b[9 + k];
+    return r;
+  }
+  var UNITS = { micron: 0.001, millimeter: 1, centimeter: 10, inch: 25.4, foot: 304.8, meter: 1000 };
+
+  function parseModelXML(xml) {
+    var unitM = /<(?:\w+:)?model\b[^>]*\bunit\s*=\s*"(\w+)"/i.exec(xml);
+    var file = { unit: UNITS[unitM ? unitM[1].toLowerCase() : 'millimeter'] || 1, objects: {}, build: [] };
+    var reObj = /<(?:\w+:)?object\b([^>]*)>([\s\S]*?)<\/(?:\w+:)?object>/g, mo;
+    while ((mo = reObj.exec(xml))) {
+      var a = attrs(mo[1]), body = mo[2], obj = { comps: [] };
+      if (/<(?:\w+:)?mesh\b/.test(body)) {
+        var vs = [], ts = [], mv, mt;
+        var reV = /<(?:\w+:)?vertex\b([^>]*)>/g;
+        while ((mv = reV.exec(body))) {
+          var va = mv[1];
+          var x = /\bx\s*=\s*"([^"]*)"/.exec(va), y = /\by\s*=\s*"([^"]*)"/.exec(va), z = /\bz\s*=\s*"([^"]*)"/.exec(va);
+          vs.push(x ? +x[1] : 0, y ? +y[1] : 0, z ? +z[1] : 0);
+        }
+        var reT = /<(?:\w+:)?triangle\b([^>]*)>/g;
+        while ((mt = reT.exec(body))) {
+          var ta = mt[1];
+          var v1 = /\bv1\s*=\s*"(\d+)"/.exec(ta), v2 = /\bv2\s*=\s*"(\d+)"/.exec(ta), v3 = /\bv3\s*=\s*"(\d+)"/.exec(ta);
+          if (v1 && v2 && v3) ts.push(+v1[1], +v2[1], +v3[1]);
+        }
+        obj.v = vs; obj.t = ts;
+      }
+      var reC = /<(?:\w+:)?component\b([^>]*)>/g, mc;
+      while ((mc = reC.exec(body))) {
+        var ca = attrs(mc[1]);
+        obj.comps.push({ id: ca.objectid, path: ca['p:path'] || null, m: parseMatrix(ca.transform) });
+      }
+      if (a.id !== undefined) file.objects[a.id] = obj;
+    }
+    var bm = /<(?:\w+:)?build\b[^>]*>([\s\S]*?)<\/(?:\w+:)?build>/.exec(xml);
+    if (bm) {
+      var reI = /<(?:\w+:)?item\b([^>]*)>/g, mi;
+      while ((mi = reI.exec(bm[1]))) {
+        var ia = attrs(mi[1]);
+        if (ia.printable === '0') continue;
+        file.build.push({ id: ia.objectid, path: ia['p:path'] || null, m: parseMatrix(ia.transform) });
+      }
+    }
+    return file;
+  }
+
+  // Unisce in un'unica mesh tutti gli oggetti da stampare del 3MF, con le loro trasformazioni
+  function mesh3MF(zip) {
+    var rootPath = '3D/3dmodel.model';
+    var files = {};
+    function load(path) {
+      var key = String(path).replace(/^\/+/, '').toLowerCase();
+      if (files[key]) return Promise.resolve(files[key]);
+      return zip.text(key).then(function (xml) { files[key] = xml ? parseModelXML(xml) : null; return files[key]; });
+    }
+    return zip.text('_rels/.rels').then(function (rels) {
+      var m = rels && /Target\s*=\s*"([^"]+\.model)"/i.exec(rels);
+      if (m) rootPath = m[1];
+      return load(rootPath);
+    }).then(function (root) {
+      if (!root) {
+        var any = zip.names.filter(function (n) { return /\.model$/i.test(n); })[0];
+        if (!any) return null;
+        rootPath = any;
+        return load(any);
+      }
+      return root;
+    }).then(function (root) {
+      if (!root) return null;
+      // carica i file esterni richiamati dai componenti (Bambu Studio e Orca usano 3D/Objects/*.model)
+      var paths = {};
+      function collect(f) { Object.keys(f.objects).forEach(function (k) { f.objects[k].comps.forEach(function (c) { if (c.path) paths[c.path.replace(/^\/+/, '').toLowerCase()] = 1; }); }); }
+      collect(root);
+      return Promise.all(Object.keys(paths).map(load)).then(function () {
+        Object.keys(files).forEach(function (k) { if (files[k]) collect(files[k]); });
+        var extra = Object.keys(paths).filter(function (p) { return !(p in files); });
+        return Promise.all(extra.map(load));
+      }).then(function () {
+        var out = [], rootKey = rootPath.replace(/^\/+/, '').toLowerCase();
+        function emit(pathKey, id, M, depth) {
+          var f = files[pathKey]; if (!f || depth > 20) return;
+          var o = f.objects[id]; if (!o) return;
+          var u = f.unit;
+          if (o.v && o.t) {
+            var det = M[0] * (M[4] * M[8] - M[5] * M[7]) - M[1] * (M[3] * M[8] - M[5] * M[6]) + M[2] * (M[3] * M[7] - M[4] * M[6]);
+            var v = o.v, t = o.t;
+            for (var i = 0; i + 2 < t.length; i += 3) {
+              var idx = det < 0 ? [t[i], t[i + 2], t[i + 1]] : [t[i], t[i + 1], t[i + 2]];
+              for (var j = 0; j < 3; j++) {
+                var q = idx[j] * 3, x = v[q] * u, y = v[q + 1] * u, z = v[q + 2] * u;
+                if (!isFinite(x)) continue;
+                out.push(x * M[0] + y * M[3] + z * M[6] + M[9] * u,
+                         x * M[1] + y * M[4] + z * M[7] + M[10] * u,
+                         x * M[2] + y * M[5] + z * M[8] + M[11] * u);
+              }
+            }
+          }
+          o.comps.forEach(function (c) { emit(c.path ? c.path.replace(/^\/+/, '').toLowerCase() : pathKey, c.id, mulM(c.m, M), depth + 1); });
+        }
+        var rootFile = files[rootKey];
+        if (rootFile.build.length) rootFile.build.forEach(function (it) { emit(it.path ? it.path.replace(/^\/+/, '').toLowerCase() : rootKey, it.id, it.m, 0); });
+        else Object.keys(rootFile.objects).forEach(function (id) { emit(rootKey, id, IDENT, 0); });
+        if (out.length < 9) return null;
+        out.length -= out.length % 9;
+        return new Float32Array(out);
+      });
+    });
+  }
+
+  // Durata scritta dagli slicer: "1d 2h 3m 4s", "2h 3m", "53m 45s", "01:02:03" o secondi
+  function parseDuration(t) {
+    t = String(t || '').trim();
+    if (!t) return 0;
+    var hms = /^(\d+):(\d{1,2}):(\d{1,2})$/.exec(t);
+    if (hms) return +hms[1] * 3600 + +hms[2] * 60 + +hms[3];
+    if (/^\d+(\.\d+)?$/.test(t)) return +t;
+    var sec = 0, found = false, re = /(\d+(?:\.\d+)?)\s*(d|h|m|s)\b/gi, m;
+    while ((m = re.exec(t))) { found = true; sec += +m[1] * { d: 86400, h: 3600, m: 60, s: 1 }[m[2].toLowerCase()]; }
+    return found ? sec : 0;
+  }
+  function sumList(t) {
+    return String(t || '').split(/[,;]/).reduce(function (a, x) { var v = parseFloat(x); return a + (isFinite(v) ? v : 0); }, 0);
+  }
+  function firstOf(text, res) {
+    for (var i = 0; i < res.length; i++) { var m = res[i].exec(text); if (m) return m[1].trim(); }
+    return '';
+  }
+
+  // Legge tempo, filamento, materiale e stampante dai commenti del G-code
+  // (PrusaSlicer, Bambu Studio, OrcaSlicer, SuperSlicer, Cura, Simplify3D, ideaMaker).
+  // Il ';' iniziale è facoltativo, così vale anche per i metadati del G-code binario di Prusa (.bgcode).
+  function parseGcodeMeta(text) {
+    var L = '(?:^|\\n)[ \\t]*;?[ \\t]*';
+    function R(s, f) { return new RegExp(L + s, f || 'i'); }
+    var r = {};
+    var dur = firstOf(text, [
+      R('total estimated time[ \\t]*[:=][ \\t]*([^;\\n]+)'),
+      R('[^\\n]*?;[ \\t]*total estimated time[ \\t]*[:=][ \\t]*([^;\\n]+)'),
+      R('estimated printing time \\(normal mode\\)[ \\t]*[:=][ \\t]*([^\\n]+)'),
+      R('estimated printing time[ \\t]*[:=][ \\t]*([^\\n]+)'),
+      R('PRINT\\.TIME:[ \\t]*(\\d+)'),
+      R('TIME:[ \\t]*(\\d+(?:\\.\\d+)?)[ \\t]*(?:\\r?\\n|$)'),
+      R('Print Time:[ \\t]*(\\d+)'),
+      R('Build time:[ \\t]*([^\\n]+)')
+    ]);
+    if (dur) {
+      var s3d = /(\d+)\s*hours?\s*(\d+)\s*minutes?/i.exec(dur);
+      r.sec = s3d ? +s3d[1] * 3600 + +s3d[2] * 60 : parseDuration(dur);
+    }
+    var g = firstOf(text, [
+      R('total filament weight \\[g\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)'),
+      R('total filament used \\[g\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)'),
+      R('filament used \\[g\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)'),
+      R('Plastic weight:[ \\t]*([\\d.]+)[ \\t]*g')
+    ]);
+    if (g) r.grams = sumList(g);
+    var cm3 = firstOf(text, [R('filament used \\[cm3\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)'), R('total filament volume \\[cm\\^?3\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)')]);
+    if (cm3) r.cm3 = sumList(cm3);
+    var mm = firstOf(text, [R('total filament length \\[mm\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)'), R('filament used \\[mm\\][ \\t]*[:=][ \\t]*([\\d.,; \\t]+)'), R('Filament length:[ \\t]*([\\d.]+)[ \\t]*mm')]);
+    if (mm) r.mm = sumList(mm);
+    var cura = firstOf(text, [R('Filament used:[ \\t]*([\\d.,; \\t]+)m')]);
+    if (cura && !r.mm) r.mm = sumList(cura) * 1000;
+    var ideam = firstOf(text, [R('Material#1 Used:[ \\t]*([\\d.]+)')]);
+    if (ideam && !r.mm) r.mm = +ideam;
+    var dia = firstOf(text, [R('filament_diameter[ \\t]*[:=][ \\t]*([\\d.]+)')]);
+    if (dia) r.diameter = +dia;
+    r.material = firstOf(text, [R('filament_type[ \\t]*[:=][ \\t]*([^\\n]+)'), R('MATERIAL:[ \\t]*([^\\n]+)')]).split(/[;,]/)[0].replace(/["\[\]]/g, '').trim();
+    r.printer = firstOf(text, [R('printer_model[ \\t]*[:=][ \\t]*([^\\n]+)'), R('TARGET_MACHINE\\.NAME:[ \\t]*([^\\n]+)'), R('printer_settings_id[ \\t]*[:=][ \\t]*([^\\n]+)'), R('Machine Name:[ \\t]*([^\\n]+)')]).replace(/["]/g, '').trim();
+    return r;
+  }
+
+  // Miniatura PNG o JPG incorporata nel G-code (la più grande)
+  function gcodeThumb(text) {
+    var re = /;\s*thumbnail(?:_(PNG|JPG|QOI))?\s+begin\s+(\d+)x(\d+)[^\n]*\n([\s\S]*?);\s*thumbnail(?:_(?:PNG|JPG|QOI))?\s+end/gi, m, best = null;
+    while ((m = re.exec(text))) {
+      var kind = (m[1] || 'PNG').toUpperCase();
+      if (kind === 'QOI') continue;
+      var area = +m[2] * +m[3];
+      if (!best || area > best.area) best = { area: area, kind: kind, data: m[4].replace(/[;\s]/g, '') };
+    }
+    return best ? 'data:image/' + (best.kind === 'JPG' ? 'jpeg' : 'png') + ';base64,' + best.data : null;
+  }
+
+  // Codici interni di Bambu Lab in slice_info.config
+  var BAMBU_IDS = { 'N1': 'Bambu Lab A1 mini', 'N2S': 'Bambu Lab A1', 'C11': 'Bambu Lab P1P', 'C12': 'Bambu Lab P1S',
+                    'BL-P001': 'Bambu Lab X1 Carbon', 'BL-P002': 'Bambu Lab X1', 'C13': 'Bambu Lab X1E', 'O1D': 'Bambu Lab H2D' };
+
+  // 3MF: geometria per l'anteprima e, se il file è già stato processato dallo slicer, tempo e grammi reali
+  function read3MF(buffer) {
+    var zip = readZip(buffer);
+    var lower = zip.names.map(function (n) { return n.toLowerCase(); });
+    function has(n) { return lower.indexOf(n.toLowerCase()) >= 0; }
+    var res = { fixedUnit: true };
+    return Promise.all([
+      zip.text('Metadata/slice_info.config'),
+      zip.text('Metadata/project_settings.config'),
+      zip.text('Metadata/Slic3r_PE.config')
+    ]).then(function (t) {
+      var info = t[0], proj = t[1], prusa = t[2];
+      if (proj) {
+        try {
+          var j = JSON.parse(proj);
+          if (j.printer_model) res.printerHint = String(j.printer_model);
+          if (Array.isArray(j.filament_type) && j.filament_type.length) res.materialHint = String(j.filament_type[0]);
+        } catch (e) {}
+      }
+      if (prusa) {
+        var pm = parseGcodeMeta(prusa);
+        if (pm.printer && !res.printerHint) res.printerHint = pm.printer;
+        if (pm.material && !res.materialHint) res.materialHint = pm.material;
+      }
+      var gcodePromise = Promise.resolve(null);
+      if (info) {
+        var sec = 0, grams = 0, plates = 0, best = null, reP = /<plate\b[^>]*>([\s\S]*?)<\/plate>/g, mp;
+        while ((mp = reP.exec(info))) {
+          var body = mp[1], meta = {}, reM = /<metadata\b([^>]*)>/g, mm;
+          while ((mm = reM.exec(body))) { var a = attrs(mm[1]); if (a.key) meta[a.key] = a.value; }
+          var pr = parseFloat(meta.prediction), w = parseFloat(meta.weight);
+          var fg = 0, reF = /<filament\b([^>]*)>/g, mf;
+          while ((mf = reF.exec(body))) {
+            var fa = attrs(mf[1]), ug = parseFloat(fa.used_g) || 0; fg += ug;
+            if (fa.type && (!best || ug > best.g)) best = { g: ug, type: fa.type };
+          }
+          if (pr > 0) { sec += pr; grams += w > 0 ? w : fg; plates++; }
+          if (meta.printer_model_id && BAMBU_IDS[meta.printer_model_id] && !res.printerHint) res.printerHint = BAMBU_IDS[meta.printer_model_id];
+        }
+        if (sec > 0) { res.sliced = { sec: sec, grams: grams, plates: plates }; if (best) res.materialHint = best.type; }
+      }
+      if (!res.sliced) {
+        // G-code dentro il 3MF senza slice_info: si leggono i commenti del primo piatto
+        var gname = zip.names.filter(function (n) { return /^metadata\/plate_\d+\.gcode$/i.test(n); })[0];
+        if (gname) gcodePromise = zip.text(gname);
+      }
+      return gcodePromise;
+    }).then(function (gtext) {
+      if (gtext) {
+        var gm = parseGcodeMeta(gtext);
+        if (gm.sec > 0) {
+          res.sliced = { sec: gm.sec, grams: gm.grams, cm3: gm.cm3, mm: gm.mm, diameter: gm.diameter, plates: 1 };
+          if (gm.material) res.materialHint = gm.material;
+          if (gm.printer) res.printerHint = gm.printer;
+        }
+      }
+      var thumbName = ['Metadata/plate_1.png', 'Metadata/thumbnail.png', 'Thumbnails/thumbnail.png', 'Metadata/plate_1_small.png'].filter(has)[0];
+      return Promise.all([mesh3MF(zip).catch(function () { return null; }), thumbName ? zip.get(thumbName) : null]);
+    }).then(function (x) {
+      res.pos = x[0];
+      if (x[1]) res.thumb = URL.createObjectURL(new Blob([x[1]], { type: 'image/png' }));
+      if (!res.pos && !res.sliced) throw new Error(T('err3mfEmpty'));
+      return res;
+    });
+  }
+
+  // G-code: si leggono solo l'inizio e la fine del file, dove gli slicer scrivono i dati riassuntivi
+  function readGcode(file) {
+    var CH = 1024 * 1024;
+    var parts = file.size <= 2 * CH ? [file] : [file.slice(0, CH), file.slice(file.size - CH)];
+    return Promise.all(parts.map(function (p) { return p.arrayBuffer(); })).then(function (bufs) {
+      var bin = /\.bgcode$/i.test(file.name);
+      var dec = new TextDecoder(bin ? 'latin1' : 'utf-8');
+      var text = bufs.map(function (b) { return dec.decode(new Uint8Array(b)); }).join('\n');
+      // Nel .bgcode i metadati sono testo tra blocchi binari: i byte non stampabili diventano a capo
+      if (bin) text = text.replace(/[^\x20-\x7E\t]/g, '\n');
+      var gm = parseGcodeMeta(text);
+      if (!(gm.sec > 0) || !(gm.grams > 0 || gm.cm3 > 0 || gm.mm > 0)) throw new Error(bin ? T('errBgcode') : T('errGcode'));
+      return {
+        sliced: { sec: gm.sec, grams: gm.grams, cm3: gm.cm3, mm: gm.mm, diameter: gm.diameter, plates: 1 },
+        materialHint: gm.material, printerHint: gm.printer, thumb: bin ? null : gcodeThumb(bufs.length ? dec.decode(new Uint8Array(bufs[0])) : '')
+      };
+    });
+  }
   // @@parse-end
   // ---------- Stato: elenco dei modelli ----------
   var models = [];      // { id, name, pos, stats, qty, scale, unitHint, row }
@@ -460,10 +802,12 @@
   }
 
   // Stima per un singolo pezzo di un modello (costi già con ricarico, IVA esclusa)
+  function unitOf(m, o) { return m.fixedUnit ? 1 : o.unit; }
   function estimatePiece(m, o) {
     var pr = printerOf(m);
     var mt = matById(m.materialId);
-    var s = o.unit * m.scale / 100;
+    if (m.sliced) return estimateSliced(m, pr, mt);
+    var s = unitOf(m, o) * m.scale / 100;
     var V = m.stats.vol * s * s * s;
     var A = m.stats.area * s * s;
     var size = m.stats.size.map(function (d) { return d * s; });
@@ -485,6 +829,24 @@
       kwh: hours * powerKW(pr),
       energy: hours * powerKW(pr) * energyPrice(),
       fits: a[0] <= b[0] && a[1] <= b[1] && a[2] <= b[2]
+    };
+  }
+
+  // File già processato dallo slicer: tempo e filamento sono quelli calcolati dallo slicer.
+  // Scala, riempimento, supporti e qualità sono già decisi nel file e qui non contano.
+  function estimateSliced(m, pr, mt) {
+    var S = m.sliced;
+    var grams = S.grams > 0 ? S.grams
+      : S.cm3 > 0 ? S.cm3 * mt.density
+      : S.mm > 0 ? S.mm * Math.PI * Math.pow((S.diameter || 1.75) / 2, 2) / 1000 * mt.density : 0;
+    var hours = S.sec / 3600, k = 1 + CONFIG.markup;
+    return {
+      sliced: true, V: 0, size: m.stats ? m.stats.size.slice() : [], grams: grams, hours: hours,
+      mat: grams / 1000 * priceKg(mt) * (1 + CONFIG.waste) * k,
+      mach: hours * machineRate(pr) * k,
+      kwh: hours * powerKW(pr),
+      energy: hours * powerKW(pr) * energyPrice(),
+      fits: true
     };
   }
 
@@ -540,7 +902,7 @@
     var hh = Math.floor(mins / 60), mm = mins % 60;
     return hh ? hh + ' h' + (mm ? ' ' + mm + ' min' : '') : mm + ' min';
   }
-  function fmtSize(size) { return size.map(function (d) { return num1.format(d); }).join(' × ') + ' mm'; }
+  function fmtSize(size) { if (!size || !size.length) return ''; return size.map(function (d) { return num1.format(d); }).join(' × ') + ' mm'; }
 
   var last = null;
   function update() {
@@ -572,7 +934,9 @@
       mat += r.mat * m.qty; mach += r.mach * m.qty; energy += r.energy * m.qty; kwh += r.kwh * m.qty; grams += r.grams * m.qty; hours += r.hours * m.qty;
       if (!r.fits) tooBig++;
       var piecePrice = ((r.mat + r.mach) * (1 - disc) + r.energy + (r.post || 0)) * (1 + CONFIG.vat);
-      m.row.meta.textContent = fmtSize(r.size) + ', ' + (r.resin ? T('mlResin', { n: num1.format(r.ml) }) : num1.format(r.grams) + ' g') + ', ' + T('each', { price: money.format(piecePrice) });
+      m.row.meta.textContent = r.sliced
+        ? T('slicedMeta', { time: fmtTime(r.hours), g: num1.format(r.grams), price: money.format(piecePrice) })
+        : fmtSize(r.size) + ', ' + (r.resin ? T('mlResin', { n: num1.format(r.ml) }) : num1.format(r.grams) + ' g') + ', ' + T('each', { price: money.format(piecePrice) });
       var prName = printerOf(m) ? printerOf(m).name : T('thisPrinter');
       var warn = !r.fits ? T('warnTooBig', { printer: prName })
         : !materialAllowed(matById(m.materialId), printerOf(m)) ? T('warnMaterial', { material: matById(m.materialId).name, printer: prName })
@@ -584,7 +948,7 @@
     });
     // Riscaldamento: una volta per ogni stampante usata nell'ordine
     var usate = {};
-    models.forEach(function (m) { if (techOf(printerOf(m)) !== 'resina') usate[m.printerId || '-'] = printerOf(m); });
+    models.forEach(function (m) { if (techOf(printerOf(m)) !== 'resina' && !m.sliced) usate[m.printerId || '-'] = printerOf(m); });
     Object.keys(usate).forEach(function (id) {
       var h = CONFIG.heatUpMinutes / 60;
       hours += h; kwh += h * powerKW(usate[id]); energy += h * powerKW(usate[id]) * energyPrice();
@@ -596,6 +960,7 @@
     net += minAdj;
     var vat = net * CONFIG.vat, total = net + vat;
     el.applyAll.hidden = models.length < 2 || models.every(function (m) {
+      if (m.sliced && techOf(printer()) === 'resina') return true;
       return m.materialId === el.material.value && m.infill === +el.infill.value && m.hollow === el.hollow.checked && m.supports === el.supports.checked &&
         (!CONFIG.printers.length || m.printerId === el.printer.value);
     });
@@ -633,8 +998,8 @@
     var cur = current();
     if (cur) {
       el.fname.textContent = cur.name;
-      el.dims.textContent = fmtSize(cur.r.size);
-      if (view) { applyViewScale(o.unit * cur.scale / 100); setMeshColor(matById(cur.materialId).color); }
+      el.dims.textContent = cur.sliced ? T('slicedFile') + (cur.sliced.plates > 1 ? ', ' + T('plates', { n: cur.sliced.plates }) : '') : fmtSize(cur.r.size);
+      if (view && cur.pos) { applyViewScale(cur.sliced ? 1 : unitOf(cur, o) * cur.scale / 100); setMeshColor(matById(cur.materialId).color); }
     }
   }
 
@@ -689,6 +1054,7 @@
     infSel.addEventListener('change', function () { m.infill = +infSel.value; update(); });
     infLabel.appendChild(infSel);
     var supLabel = document.createElement('label');
+    if (m.sliced) { scale.input.disabled = true; scale.input.title = T('slicedLocked'); }
     var supBox = document.createElement('input'); supBox.type = 'checkbox'; supBox.checked = m.supports;
     supBox.addEventListener('change', function () { m.supports = supBox.checked; update(); });
     supLabel.appendChild(supBox); supLabel.appendChild(document.createTextNode(T('supports')));
@@ -708,6 +1074,7 @@
       prSel = document.createElement('select'); prSel.className = 'c3d-file-printer';
       prSel.setAttribute('aria-label', T('ariaModel', { name: m.name }));
       setPicker(teSel, brSel, prSel, m.printerId);
+      if (m.sliced) { teSel.disabled = true; teSel.title = T('slicedTech'); }
       wirePicker(teSel, brSel, prSel, function () {
         m.printerId = prSel.value; refreshMaterialOptions();
         if (m.id === selectedId) updateGrid();
@@ -729,6 +1096,12 @@
     holSel.addEventListener('change', function () { m.hollow = holSel.value === '1'; update(); });
     holLabel.appendChild(holSel);
     extra.appendChild(infLabel); extra.appendChild(holLabel); extra.appendChild(supLabel);
+    var slicedNote = null;
+    if (m.sliced) {
+      supLabel.hidden = true;
+      slicedNote = document.createElement('span'); slicedNote.className = 'c3d-sliced-note'; slicedNote.textContent = T('slicedNote');
+      extra.appendChild(slicedNote);
+    }
 
     var rm = document.createElement('button'); rm.type = 'button'; rm.className = 'c3d-file-remove';
     rm.setAttribute('aria-label', T('ariaRemove', { name: m.name })); rm.textContent = '×';
@@ -756,7 +1129,7 @@
     });
     if (selectedId === id) selectedId = models.length ? models[0].id : null;
     markActive();
-    if (!models.length) { el.canvas.hidden = true; el.hint.hidden = true; clearMesh(); notice = ''; setMsg(''); }
+    if (!models.length) { el.canvas.hidden = true; el.hint.hidden = true; clearMesh(); notice = ''; setMsg(''); if (el.thumb) el.thumb.hidden = true; if (el.nothumb) el.nothumb.hidden = true; }
     update();
     if (models.length) showPreview();
   }
@@ -786,30 +1159,67 @@
     }
     busy = true;
     setMsg(T('analyzing', { name: file.name }) + (queue.length ? T('queued', { n: queue.length }) : ''));
-    if (!/\.stl$/i.test(file.name)) { errors.push(T('notStl', { name: file.name })); return next(); }
-    if (file.size > CONFIG.maxFileMB * 1024 * 1024) { errors.push(T('tooLarge', { name: file.name, mb: CONFIG.maxFileMB })); return next(); }
-    var reader = new FileReader();
-    reader.onerror = function () { errors.push(T('cantRead', { name: file.name })); next(); };
-    reader.onload = function () {
-      try {
-        var pos = parseSTL(reader.result);
-        var stats = meshStats(pos);
-        if (!(stats.vol > 0)) throw new Error(T('errNoVolume'));
+    var kind = /\.stl$/i.test(file.name) ? 'stl' : /\.3mf$/i.test(file.name) ? '3mf' : /\.(gcode|gco|g|bgcode)$/i.test(file.name) ? 'gcode' : '';
+    if (!kind) { errors.push(T('notStl', { name: file.name })); return next(); }
+    // Il G-code si legge solo in parte, quindi può essere grande; STL e 3MF vanno letti interi
+    var maxMB = kind === '3mf' ? CONFIG.maxFileMB * 2 : CONFIG.maxFileMB;
+    if (kind !== 'gcode' && file.size > maxMB * 1024 * 1024) { errors.push(T('tooLarge', { name: file.name, mb: maxMB })); return next(); }
+    var job = kind === 'gcode' ? readGcode(file)
+      : file.arrayBuffer().then(function (buf) { return kind === '3mf' ? read3MF(buf) : { pos: parseSTL(buf) }; });
+    job.then(function (d) { addModel(file, d); }).catch(function (e) {
+      errors.push(file.name + ': ' + ((e && e.message) || T('errInvalid')));
+    }).then(function () { setTimeout(next, 0); });
+  }
+
+  // Le stampanti indicate nel file dello slicer si cercano tra quelle dell'elenco (vince il nome più lungo trovato)
+  function compact(t) { return String(t || '').toLowerCase().replace(/original\s+prusa|bambu\s*lab/g, function (x) { return x.replace(/\s+/g, ''); }).replace(/[^a-z0-9]/g, ''); }
+  function matchPrinterHint(hint) {
+    var h = compact(hint);
+    if (!h) return null;
+    var withBrand = CONFIG.printers.filter(function (p) { return h.indexOf(compact(p.brand)) >= 0; });
+    var pool = withBrand.length ? withBrand : CONFIG.printers;
+    var best = null, bestLen = 0;
+    pool.forEach(function (p) {
+      var mdl = compact(p.model), full = compact(p.brand + p.model);
+      var ok = h === mdl || h === full || h.indexOf(full) >= 0 || (h.indexOf(mdl) >= 0 && (withBrand.length || mdl.length >= 3));
+      if (ok && mdl.length > bestLen) { best = p; bestLen = mdl.length; }
+    });
+    return best;
+  }
+
+  function addModel(file, d) {
+    var stats = null, hint = '';
+    if (d.pos) {
+      stats = meshStats(d.pos);
+      if (!(stats.vol > 0)) {
+        if (!d.sliced) throw new Error(T('errNoVolume'));
+        d.pos = null; stats = null;   // per il G-code bastano i dati dello slicer
+      } else if (!d.fixedUnit) {
         var maxDim = Math.max.apply(null, stats.size);
-        var hint = maxDim < 5 ? T('hintSmall') : maxDim > 2000 ? T('hintLarge') : '';
-        var m = { id: nextId++, name: file.name, pos: pos, stats: stats, qty: 1, scale: 100, materialId: el.material.value, printerId: CONFIG.printers.length ? el.printer.value : null, hollow: el.hollow.checked,
-                  infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
-        var imp = takePending(m.name);
-        if (imp) applySettings(m, imp);
-        models.push(m); addRow(m); refreshMaterialOptions();
-        if (selectedId === null) { selectedId = m.id; markActive(); update(); showPreview(); }
-        else update();
-      } catch (e) {
-        errors.push(file.name + ': ' + (e.message || T('errInvalid')));
+        hint = maxDim < 5 ? T('hintSmall') : maxDim > 2000 ? T('hintLarge') : '';
       }
-      setTimeout(next, 0);
-    };
-    reader.readAsArrayBuffer(file);
+    }
+    var m = { id: nextId++, name: file.name, pos: d.pos || null, stats: stats, sliced: d.sliced || null, thumb: d.thumb || null, fixedUnit: !!d.fixedUnit,
+              qty: 1, scale: 100, materialId: el.material.value, printerId: CONFIG.printers.length ? el.printer.value : null, hollow: el.hollow.checked,
+              infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
+    // Stampante e materiale suggeriti dal file (un G-code è sempre a filamento)
+    if (CONFIG.printers.length) {
+      var hp = d.printerHint ? matchPrinterHint(d.printerHint) : null;
+      if (hp && (!m.sliced || hp.tech !== 'resina')) m.printerId = hp.id;
+      if (m.sliced && techOf(printerOf(m)) === 'resina') {
+        var fp = CONFIG.printers.filter(function (p) { return p.tech !== 'resina' && p.default; })[0] || CONFIG.printers.filter(function (p) { return p.tech !== 'resina'; })[0];
+        if (fp) m.printerId = fp.id;
+      }
+    }
+    if (d.materialHint) {
+      var hm = findMaterial('', d.materialHint, techOf(printerOf(m)));
+      if (hm) m.materialId = hm.id;
+    }
+    var imp = takePending(m.name);
+    if (imp) applySettings(m, imp);
+    models.push(m); addRow(m); refreshMaterialOptions();
+    if (selectedId === null) { selectedId = m.id; markActive(); update(); showPreview(); }
+    else update();
   }
 
   el.pick.addEventListener('click', function () { el.file.click(); });
@@ -850,7 +1260,7 @@
       m.infill = +el.infill.value; m.row.infSel.value = m.infill;
       m.supports = el.supports.checked; m.row.supBox.checked = m.supports;
       m.hollow = el.hollow.checked; m.row.holSel.value = m.hollow ? '1' : '0';
-      if (m.row.prSel) { m.printerId = el.printer.value; setPicker(m.row.teSel, m.row.brSel, m.row.prSel, m.printerId); }
+      if (m.row.prSel && !(m.sliced && techOf(printer()) === 'resina')) { m.printerId = el.printer.value; setPicker(m.row.teSel, m.row.brSel, m.row.prSel, m.printerId); }
     });
     refreshMaterialOptions(); updateGrid();
     update();
@@ -928,8 +1338,10 @@
         var each = ((r.mat + r.mach) * (1 - last.disc) + r.energy + (r.post || 0)) * (1 + CONFIG.vat);
         var note = !r.fits ? T('warnTooBig', { printer: p ? p.name : T('thisPrinter') })
           : !materialAllowed(mt, p) ? T('warnMaterial', { material: mt.name, printer: p ? p.name : T('thisPrinter') }) : '';
-        aoa.push([m.name, techLabel(techOf(p)), p ? p.brand : '', p ? p.model : '', mt.name, m.qty, m.scale,
-          resin ? '' : m.infill, resin ? (m.hollow ? T('hollow') : T('solid')) : '', m.supports ? yes : no,
+        var sl = !!r.sliced;
+        if (sl) note = T('slicedFile') + (note ? '. ' + note : '');
+        aoa.push([m.name, techLabel(techOf(p)), p ? p.brand : '', p ? p.model : '', mt.name, m.qty, sl ? '' : m.scale,
+          resin || sl ? '' : m.infill, resin && !sl ? (m.hollow ? T('hollow') : T('solid')) : '', sl ? '' : (m.supports ? yes : no),
           r.size.map(function (d) { return num1.format(d); }).join(' × '),
           Math.round(r.grams * 10) / 10, resin ? Math.round(r.ml * 10) / 10 : '', r.hours / 24,
           r.mat * R, r.mach * R, r.energy * R, (r.post || 0) * R, each * R, each * m.qty * R, Math.round(r.kwh * 1000) / 1000, note,
@@ -1023,7 +1435,7 @@
   }
   function readRow(r) {
     var name = String(r[COL.file] === undefined ? '' : r[COL.file]).trim();
-    if (!name || !/\.stl$/i.test(name)) return null;
+    if (!name || !/\.(stl|3mf|gcode|gco|g|bgcode)$/i.test(name)) return null;
     var s = { name: name };
     var p = CONFIG.printers.length ? findPrinter(r[COL.printerId] || '', r[COL.brand] || '', r[COL.model] || '') : null;
     if (p) s.printerId = p.id;
@@ -1039,7 +1451,8 @@
     return s;
   }
   function applySettings(m, s) {
-    ['printerId', 'materialId', 'qty', 'scale', 'infill', 'hollow', 'supports'].forEach(function (k) { if (s[k] !== undefined) m[k] = s[k]; });
+    (m.sliced ? ['printerId', 'materialId', 'qty'] : ['printerId', 'materialId', 'qty', 'scale', 'infill', 'hollow', 'supports']).forEach(function (k) { if (s[k] !== undefined) m[k] = s[k]; });
+    if (m.sliced && CONFIG.printers.length && techOf(printerOf(m)) === 'resina') m.printerId = CONFIG.printers.filter(function (p) { return p.tech !== 'resina'; })[0].id;
     if (!m.row) return;
     m.row.qtyIn.value = m.qty; m.row.scaleIn.value = m.scale;
     m.row.matSel.value = m.materialId; m.row.infSel.value = m.infill;
@@ -1143,6 +1556,16 @@
   function showPreview() {
     var m = current();
     if (!m) return;
+    // Senza geometria (G-code) si mostra la miniatura salvata dallo slicer, se c'è
+    if (!m.pos) {
+      el.canvas.hidden = true; el.hint.hidden = true;
+      if (el.thumb) { el.thumb.hidden = !m.thumb; if (m.thumb) el.thumb.src = m.thumb; }
+      if (el.nothumb) el.nothumb.hidden = !!m.thumb;
+      update();
+      return;
+    }
+    if (el.thumb) el.thumb.hidden = true;
+    if (el.nothumb) el.nothumb.hidden = true;
     loadThree().then(function (T) {
       if (current() !== m) return; // selezione cambiata nel frattempo
       if (!view) initView(T);
