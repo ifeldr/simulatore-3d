@@ -116,6 +116,12 @@
           </div>
         </div>
         <button type="button" class="c3d-cta" id="c3d-cta" disabled>{{ t.calcola }}</button>
+        <div class="c3d-xls">
+          <button type="button" class="c3d-xls-btn" id="c3d-xls-out" disabled>{{ t.scarica_excel }}</button>
+          <button type="button" class="c3d-xls-btn" id="c3d-xls-in">{{ t.importa_excel }}</button>
+          <input type="file" id="c3d-xls-file" accept=".xlsx,.xls,.ods,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" hidden>
+        </div>
+        <p class="c3d-xls-msg" id="c3d-xls-msg" role="status" aria-live="polite" hidden></p>
         <p class="c3d-note">{{ t.nota }}</p>
         {%- if site.caffe_url and site.caffe_url != "" %}
         <p class="c3d-coffee"><a href="{{ site.caffe_url }}" target="_blank" rel="noopener">{{ testi.caffe_risultato }}</a></p>

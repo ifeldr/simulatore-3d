@@ -98,6 +98,18 @@
 }
 #c3d-calc .c3d-cta:hover{background:var(--c3d-accent-hover)}
 #c3d-calc .c3d-cta:disabled{background:#AEB5C0;cursor:not-allowed}
+#c3d-calc .c3d-xls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+#c3d-calc .c3d-xls-btn{
+  padding:10px 12px; border:1px solid var(--c3d-accent); border-radius:8px; background:transparent;
+  color:var(--c3d-accent); font-weight:600; font-size:15px; cursor:pointer; text-align:center; line-height:1.25;
+}
+#c3d-calc .c3d-xls-btn:hover{background:var(--c3d-accent);color:#fff}
+#c3d-calc .c3d-xls-btn:disabled{border-color:#AEB5C0;color:#8A93A0;background:transparent;cursor:not-allowed}
+#c3d-calc .c3d-xls-msg{margin-top:8px;font-size:13.5px;color:var(--c3d-muted)}
+#c3d-calc .c3d-xls-msg.is-ok{color:#1E7B45}
+#c3d-calc .c3d-xls-msg.is-warn{color:#9A5B00}
+#c3d-calc .c3d-xls-msg.is-error{color:#B42318}
+@container (max-width:360px){#c3d-calc .c3d-xls{grid-template-columns:1fr}}
 #c3d-calc .c3d-note{margin-top:10px;font-size:13.5px;color:var(--c3d-muted)}
 #c3d-calc .c3d-empty{color:var(--c3d-muted);font-size:15px}
 @container (max-width:460px){#c3d-calc .c3d-stats{gap:6px}#c3d-calc .c3d-stats div{padding:7px 8px}#c3d-calc .c3d-stats dt{font-size:12px}#c3d-calc .c3d-stats dd{font-size:15px}}

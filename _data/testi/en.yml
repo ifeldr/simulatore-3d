@@ -51,6 +51,8 @@ pagina:
   costo_totale: Total cost
   calcola: Calculate
   nota: Rough estimate based on the geometry of the files.
+  scarica_excel: "⬇ Download Excel"
+  importa_excel: "⬆ Import settings"
 
 js:
   notAvailable: " (not available)"
@@ -107,3 +109,49 @@ js:
   ariaBrand: "Printer brand ({name})"
   ariaModel: "Printer model ({name})"
   ariaRemove: "Remove {name}"
+  xlsLoading: Preparing the Excel file…
+  xlsLoadError: "Couldn't load the Excel module: check your connection and try again."
+  xlsImportBad: "The file isn't a valid Excel sheet."
+  xlsImportNone: "No simulator settings found in the file."
+  xlsImportDone: "Settings imported: applied to {n} of {tot} files."
+  xlsImportWaiting: "Settings imported for {tot} files."
+  xlsImportGlobals: General settings imported.
+  xlsImportPending: "Upload {files}: they will get the imported settings."
+  xlsFileName: "3d-simulator-{date}.xlsx"
+  xlsSheetFiles: Files
+  xlsSheetSummary: Summary
+  xlsTitle: 3D simulator, print cost
+  xlsDate: Date
+  xlsCurrency: Currency
+  xlsRate: "rate €1 = ${rate}"
+  xlsEnergyPrice: "Energy cost ({unit})"
+  xlsQuality: Quality
+  xlsUnit: File units
+  xlsDefPrinter: Printer for new files
+  xlsDefMaterial: Material for new files
+  xlsWeight: Total weight (g)
+  xlsTime: Total time
+  xlsTotal: Total
+  xlsYes: "Yes"
+  xlsNo: "No"
+  xlsColFile: File
+  xlsColTech: Technology
+  xlsColBrand: Brand
+  xlsColModel: Model
+  xlsColMaterial: Material
+  xlsColInfill: Infill %
+  xlsColSize: Size (mm)
+  xlsColGrams: Weight per part (g)
+  xlsColMl: Resin per part (ml)
+  xlsColTime: Time per part
+  xlsColMatCost: Material per part
+  xlsColEnergy: Energy per part
+  xlsColPost: Washing per part
+  xlsColEach: Cost per part
+  xlsColTotal: Total cost
+  xlsColKwh: kWh per part
+  xlsColNote: Warnings
+  xlsColPrinterId: Printer code
+  xlsColMaterialId: Material code
+  xlsNoteEstimate: "Rough estimate based on the geometry of the files. The total also includes printer warm-up, which isn't split across the individual files."
+  xlsNoteImport: "You can change parts, scale, infill, interior, supports, material and printer in the Files sheet and import it back into the simulator: the STL files must be uploaded again, with the same names."

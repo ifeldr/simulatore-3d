@@ -38,12 +38,22 @@ e il costo di lavaggio e polimerizzazione per ogni stampa.
 - Il visitatore sceglie tra euro e dollari in entrambe le lingue. Tutti gli importi del file sono in
   euro e vengono convertiti con `cambio_eur_usd` (1 € = X $): aggiornalo ogni tanto.
 
+## Excel
+
+- **Scarica Excel** crea un file `.xlsx` con un foglio per i file (una riga per STL, con impostazioni,
+  peso, tempo e costi), un foglio di riepilogo e un foglio nascosto con le impostazioni generali.
+- **Importa impostazioni** rilegge quel file: le righe vengono abbinate ai file STL con lo stesso nome.
+  Se gli STL non sono ancora caricati, ricevono le impostazioni quando li carichi.
+  Le modifiche fatte in Excel a pezzi, scala, riempimento, interno, supporti, materiale e stampante vengono riprese.
+- Tutto avviene nel browser con [SheetJS](https://sheetjs.com) (licenza Apache 2.0), salvato in
+  `assets/calcolatore-3d/vendor/` e caricato solo al primo clic.
+
 ## File
 
 - `it/index.html`, `en/index.html`: le due versioni della pagina (usano `_layouts/simulatore.html`)
 - `index.html`: porta alla versione nella lingua giusta
 - `_includes/calcolatore-3d.html`: il calcolatore
-- `assets/calcolatore-3d/`: logica e stile del calcolatore
+- `assets/calcolatore-3d/`: logica e stile del calcolatore (in `vendor/` la libreria per i file Excel)
 - `assets/pagina.css`: stile della pagina
 - `_config.yml`: indirizzo, nome e link del sito principale
 

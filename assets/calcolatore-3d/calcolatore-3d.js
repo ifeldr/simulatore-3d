@@ -1,6 +1,8 @@
-/* Calcolatore costo stampa 3D da file STL, v1.5 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
+/* Calcolatore costo stampa 3D da file STL, v1.6 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
 (function () {
   'use strict';
+  // Percorso di questo script: serve per caricare la libreria Excel che sta nella stessa cartella
+  var SCRIPT_SRC = (document.currentScript && document.currentScript.src) || '';
 
   /* ============ VALORI PREDEFINITI ============
      Non serve modificarli: prezzi e parametri si impostano in _data/calcolatore_3d.yml.
@@ -198,7 +200,8 @@
     material: $('c3d-material'), applyAll: $('c3d-apply-all'), quality: $('c3d-quality'), infill: $('c3d-infill'),
     infillOut: $('c3d-infill-out'), unit: $('c3d-unit'), supports: $('c3d-supports'),
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
-    time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta')
+    time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta'),
+    xlsOut: $('c3d-xls-out'), xlsIn: $('c3d-xls-in'), xlsFile: $('c3d-xls-file'), xlsMsg: $('c3d-xls-msg')
   };
 
   // ---------- Valuta ----------
@@ -520,6 +523,7 @@
     el.infillOut.textContent = el.infill.value + '%';
     var has = models.length > 0;
     el.empty.hidden = has; el.out.hidden = !has; el.cta.disabled = !has;
+    if (el.xlsOut) el.xlsOut.disabled = !has;
     el.listWrap.hidden = !has; el.drop.hidden = has; el.overlay.hidden = !has;
     if (!has) { last = null; return; }
 
@@ -571,7 +575,7 @@
       return m.materialId === el.material.value && m.infill === +el.infill.value && m.hollow === el.hollow.checked && m.supports === el.supports.checked &&
         (!CONFIG.printers.length || m.printerId === el.printer.value);
     });
-    last = { o: o, total: total, grams: grams, pieces: pieces, disc: disc };
+    last = { o: o, total: total, grams: grams, pieces: pieces, disc: disc, hours: hours, kwh: kwh, items: items };
 
     el.pieces.textContent = num0.format(pieces);
     el.weight.textContent = grams >= 1000 ? num1.format(grams / 1000) + ' kg' : num1.format(grams) + ' g';
@@ -592,6 +596,7 @@
       var dd = document.createElement('dd'); dd.textContent = money.format(row[1]);
       div.appendChild(dt); div.appendChild(dd); el.lines.appendChild(div);
     });
+    last.rows = rows;
     el.total.textContent = money.format(total);
     el.totalLabel.firstChild.nodeValue = CONFIG.vat > 0 ? T('totalVat') : T('total');
     el.summary.textContent = models.length === 1 ? T('oneFile') : T('manyFiles', { n: models.length });
@@ -708,7 +713,7 @@
 
     li.appendChild(pick); li.appendChild(matWrap); li.appendChild(qty.wrap); li.appendChild(scale.wrap); li.appendChild(rm); li.appendChild(extra);
     el.list.appendChild(li);
-    m.row = { li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, brSel: brSel, teSel: teSel, infLabel: infLabel, holLabel: holLabel, holSel: holSel, infSel: infSel, supBox: supBox, swatch: sw };
+    m.row = { qtyIn: qty.input, scaleIn: scale.input, li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, brSel: brSel, teSel: teSel, infLabel: infLabel, holLabel: holLabel, holSel: holSel, infSel: infSel, supBox: supBox, swatch: sw };
   }
 
   function markActive() {
@@ -770,6 +775,8 @@
         var hint = maxDim < 5 ? T('hintSmall') : maxDim > 2000 ? T('hintLarge') : '';
         var m = { id: nextId++, name: file.name, pos: pos, stats: stats, qty: 1, scale: 100, materialId: el.material.value, printerId: CONFIG.printers.length ? el.printer.value : null, hollow: el.hollow.checked,
                   infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
+        var imp = takePending(m.name);
+        if (imp) applySettings(m, imp);
         models.push(m); addRow(m); refreshMaterialOptions();
         if (selectedId === null) { selectedId = m.id; markActive(); update(); showPreview(); }
         else update();
@@ -834,6 +841,229 @@
     scrivi('c3d-valuta', currency);
     makeMoney(); showEnergy(); update();
   });
+
+  // ---------- Excel: scarica e importa le impostazioni ----------
+  // Il file ha due fogli visibili (file e riepilogo) e uno nascosto con le impostazioni generali.
+  // L'importazione legge il foglio dei file, quindi le modifiche fatte in Excel vengono riprese.
+  // La libreria SheetJS si carica solo al primo uso, dalla stessa cartella di questo script.
+  var XLSX_URL = (function () { try { return new URL('vendor/xlsx.full.min.js', SCRIPT_SRC || location.href).href; } catch (e) { return 'vendor/xlsx.full.min.js'; } })();
+  var xlsxPromise = null;
+  function loadXLSX() {
+    if (window.XLSX) return Promise.resolve(window.XLSX);
+    if (xlsxPromise) return xlsxPromise;
+    xlsxPromise = new Promise(function (res, rej) {
+      var s = document.createElement('script'); s.src = XLSX_URL; s.async = true;
+      s.onload = function () { window.XLSX ? res(window.XLSX) : rej(new Error('XLSX')); };
+      s.onerror = function () { xlsxPromise = null; rej(new Error('XLSX')); };
+      document.head.appendChild(s);
+    });
+    return xlsxPromise;
+  }
+  function xlsMsg(text, kind) {
+    if (!el.xlsMsg) return;
+    el.xlsMsg.textContent = text || ''; el.xlsMsg.hidden = !text;
+    el.xlsMsg.className = 'c3d-xls-msg' + (kind ? ' is-' + kind : '');
+  }
+  // Colonne del foglio dei file: l'ordine è fisso e vale per tutte e due le lingue
+  var COL = { file: 0, tech: 1, brand: 2, model: 3, material: 4, qty: 5, scale: 6, infill: 7, interior: 8, supports: 9,
+              printerId: 22, materialId: 23 };
+  var SHEET_HIDDEN = 'c3d';
+
+  function curFmt() { return currency === 'USD' ? '"$"#,##0.00' : '#,##0.00 "€"'; }
+  function fileStamp() { var d = new Date(); function z(n) { return (n < 10 ? '0' : '') + n; } return d.getFullYear() + '-' + z(d.getMonth() + 1) + '-' + z(d.getDate()); }
+
+  function exportExcel() {
+    if (!models.length) return;
+    update();
+    xlsMsg(T('xlsLoading'));
+    loadXLSX().then(function (X) {
+      var o = last.o, R = rate(), cf = curFmt(), tf = '[h]:mm', yes = T('xlsYes'), no = T('xlsNo');
+      // Foglio 1: un file per riga
+      var head = [T('xlsColFile'), T('xlsColTech'), T('xlsColBrand'), T('xlsColModel'), T('xlsColMaterial'), T('quantity'), T('scale'),
+        T('xlsColInfill'), T('interior'), T('supports'), T('xlsColSize'), T('xlsColGrams'), T('xlsColMl'), T('xlsColTime'),
+        T('xlsColMatCost'), T('rowWear'), T('xlsColEnergy'), T('xlsColPost'), T('xlsColEach'), T('xlsColTotal'), T('xlsColKwh'), T('xlsColNote'),
+        T('xlsColPrinterId'), T('xlsColMaterialId')];
+      var aoa = [head];
+      models.forEach(function (m) {
+        var r = m.r, p = printerOf(m), mt = matById(m.materialId), resin = !!r.resin;
+        var each = ((r.mat + r.mach) * (1 - last.disc) + r.energy + (r.post || 0)) * (1 + CONFIG.vat);
+        var note = !r.fits ? T('warnTooBig', { printer: p ? p.name : T('thisPrinter') })
+          : !materialAllowed(mt, p) ? T('warnMaterial', { material: mt.name, printer: p ? p.name : T('thisPrinter') }) : '';
+        aoa.push([m.name, techLabel(techOf(p)), p ? p.brand : '', p ? p.model : '', mt.name, m.qty, m.scale,
+          resin ? '' : m.infill, resin ? (m.hollow ? T('hollow') : T('solid')) : '', m.supports ? yes : no,
+          r.size.map(function (d) { return num1.format(d); }).join(' × '),
+          Math.round(r.grams * 10) / 10, resin ? Math.round(r.ml * 10) / 10 : '', r.hours / 24,
+          r.mat * R, r.mach * R, r.energy * R, (r.post || 0) * R, each * R, each * m.qty * R, Math.round(r.kwh * 1000) / 1000, note,
+          p ? printerCode(p) : '', mt.baseName || mt.name]);
+      });
+      var n = models.length;
+      var tot = [T('xlsTotal'), '', '', '', '', { f: 'SUM(F2:F' + (n + 1) + ')' }, '', '', '', '', '', '', '', '', '', '', '', '', '', { f: 'SUM(T2:T' + (n + 1) + ')' }];
+      aoa.push(tot);
+      var ws = X.utils.aoa_to_sheet(aoa);
+      for (var i = 2; i <= n + 2; i++) {
+        ['O', 'P', 'Q', 'R', 'S', 'T'].forEach(function (c) { var cell = ws[c + i]; if (cell && cell.t === 'n') cell.z = cf; });
+        var tc = ws['N' + i]; if (tc && tc.t === 'n') tc.z = tf;
+      }
+      ws['T' + (n + 2)].z = cf;
+      ws['!cols'] = [28, 11, 13, 20, 24, 7, 8, 12, 11, 9, 20, 12, 12, 10, 12, 12, 12, 12, 12, 13, 9, 40, 22, 16].map(function (w) { return { wch: w }; });
+      ws['!autofilter'] = { ref: 'A1:X' + (n + 1) };
+
+      // Foglio 2: riepilogo, con le stesse voci mostrate nella pagina
+      var pDef = printer(), q = o.quality;
+      var unitLabel = el.unit.options[el.unit.selectedIndex] ? el.unit.options[el.unit.selectedIndex].textContent : '';
+      var sum = [
+        [T('xlsTitle')], [location.href.split('#')[0]], [],
+        [T('xlsDate'), new Date().toLocaleString(LANG.locale)],
+        [T('xlsCurrency'), currency + (currency === 'USD' ? ' (' + T('xlsRate', { rate: CONFIG.usdRate }) + ')' : '')],
+        [T('xlsEnergyPrice', { unit: (currency === 'USD' ? '$' : '€') + '/kWh' }), Math.round(energyEUR * R * 1000) / 1000],
+        [T('xlsQuality'), q.label], [T('xlsUnit'), unitLabel],
+        [T('xlsDefPrinter'), pDef ? pDef.name : ''], [T('xlsDefMaterial'), matById(el.material.value).name], [],
+        [T('quantity'), last.pieces], [T('xlsWeight'), Math.round(last.grams * 10) / 10], [T('xlsTime'), last.hours / 24], []
+      ];
+      var firstMoney = sum.length + 1;
+      (last.rows || []).forEach(function (row) { sum.push([row[0], row[1] * R]); });
+      sum.push([T('total'), last.total * R]);
+      var lastMoney = sum.length;
+      sum.push([], [T('xlsNoteEstimate')], [T('xlsNoteImport')]);
+      var ws2 = X.utils.aoa_to_sheet(sum);
+      ws2['B14'].z = tf;
+      for (var j = firstMoney; j <= lastMoney; j++) if (ws2['B' + j]) ws2['B' + j].z = cf;
+      ws2['!cols'] = [{ wch: 42 }, { wch: 30 }];
+
+      // Foglio 3 (nascosto): impostazioni generali in forma leggibile dal simulatore
+      var ws3 = X.utils.aoa_to_sheet([
+        ['chiave', 'valore'], ['versione', 1], ['qualita', q.id], ['unita', +el.unit.value || 1], ['energia_eur_kwh', energyEUR], ['valuta', currency],
+        ['stampante', pDef ? printerCode(pDef) : ''], ['materiale', matById(el.material.value).baseName || matById(el.material.value).name], ['riempimento', +el.infill.value],
+        ['svuotati', el.hollow.checked ? 1 : 0], ['supporti', el.supports.checked ? 1 : 0]
+      ]);
+      var wb = X.utils.book_new();
+      X.utils.book_append_sheet(wb, ws, T('xlsSheetFiles'));
+      X.utils.book_append_sheet(wb, ws2, T('xlsSheetSummary'));
+      X.utils.book_append_sheet(wb, ws3, SHEET_HIDDEN);
+      wb.Workbook = { Sheets: [{ Hidden: 0 }, { Hidden: 0 }, { Hidden: 1 }] };
+      X.writeFile(wb, T('xlsFileName', { date: fileStamp() }));
+      xlsMsg('');
+    }).catch(function () { xlsMsg(T('xlsLoadError'), 'error'); });
+  }
+
+  // ----- Importazione -----
+  var pending = [];   // impostazioni di file non ancora caricati, applicate quando arriva l'STL con lo stesso nome
+  function norm(t) { return String(t === undefined || t === null ? '' : t).trim().toLowerCase(); }
+  function takePending(name) {
+    for (var i = 0; i < pending.length; i++) if (norm(pending[i].name) === norm(name)) return pending.splice(i, 1)[0];
+    return null;
+  }
+  // Codici stabili (non dipendono dall'ordine nel file YAML né dalla lingua)
+  function printerCode(p) { return p.brand + ' | ' + p.model; }
+  function isYes(v) { return v === true || /^(s[iì]|yes|y|x|1|true|vero)$/i.test(String(v).trim()); }
+  // Prima le colonne visibili (così valgono le modifiche fatte in Excel), poi il codice nascosto in fondo alla riga
+  function findPrinter(code, brand, model) {
+    var b = norm(brand), md = norm(model);
+    var p = md ? (CONFIG.printers.filter(function (x) { return norm(x.model) === md && (!b || norm(x.brand) === b); })[0] ||
+      CONFIG.printers.filter(function (x) { return norm(x.name) === md || norm(x.name) === norm(brand + ' ' + model); })[0]) : null;
+    return p || CONFIG.printers.filter(function (x) { return norm(printerCode(x)) === norm(code); })[0] || null;
+  }
+  function findMaterial(code, name, tech) {
+    var ok = CONFIG.materials.filter(function (x) { return !tech || x.tech === tech; });
+    var nm = norm(name);
+    var mt = nm ? ok.filter(function (x) { return norm(x.name) === nm || norm(x.baseName) === nm; })[0] : null;
+    if (mt) return mt;
+    mt = ok.filter(function (x) { return norm(x.baseName || x.name) === norm(code); })[0];
+    if (mt) return mt;
+    return nm ? ok.filter(function (x) { return primaParola(x.name) === primaParola(nm) || primaParola(x.baseName || '') === primaParola(nm); })[0] || null : null;
+  }
+  function readRow(r) {
+    var name = String(r[COL.file] === undefined ? '' : r[COL.file]).trim();
+    if (!name || !/\.stl$/i.test(name)) return null;
+    var s = { name: name };
+    var p = CONFIG.printers.length ? findPrinter(r[COL.printerId] || '', r[COL.brand] || '', r[COL.model] || '') : null;
+    if (p) s.printerId = p.id;
+    var mt = findMaterial(r[COL.materialId] || '', r[COL.material] || '', p ? p.tech : null);
+    if (mt) s.materialId = mt.id;
+    var qn = parseInt(r[COL.qty], 10); if (qn >= 1) s.qty = Math.min(999, qn);
+    var sc = parseFloat(String(r[COL.scale]).replace(',', '.')); if (sc >= 1) s.scale = Math.min(1000, sc);
+    var inf = parseFloat(String(r[COL.infill]).replace(',', '.').replace('%', ''));
+    if (isFinite(inf)) { if (inf > 0 && inf <= 1) inf *= 100; s.infill = Math.min(100, Math.max(10, Math.round(inf / 5) * 5)); }
+    var it = norm(r[COL.interior]);
+    if (it) s.hollow = /svuot|hollow|cav/.test(it);
+    if (r[COL.supports] !== undefined && String(r[COL.supports]).trim() !== '') s.supports = isYes(r[COL.supports]);
+    return s;
+  }
+  function applySettings(m, s) {
+    ['printerId', 'materialId', 'qty', 'scale', 'infill', 'hollow', 'supports'].forEach(function (k) { if (s[k] !== undefined) m[k] = s[k]; });
+    if (!m.row) return;
+    m.row.qtyIn.value = m.qty; m.row.scaleIn.value = m.scale;
+    m.row.matSel.value = m.materialId; m.row.infSel.value = m.infill;
+    m.row.supBox.checked = m.supports; m.row.holSel.value = m.hollow ? '1' : '0';
+    if (m.row.prSel) setPicker(m.row.teSel, m.row.brSel, m.row.prSel, m.printerId);
+  }
+  function applyGlobals(g) {
+    if (g.qualita) { var qi = el.quality.querySelector('input[value="' + String(g.qualita).replace(/"/g, '') + '"]'); if (qi) qi.checked = true; }
+    if (g.unita !== undefined) {
+      var uo = Array.prototype.filter.call(el.unit.options, function (op) { return +op.value === +g.unita; })[0];
+      if (uo) el.unit.value = uo.value;
+    }
+    var en = parseFloat(g.energia_eur_kwh);
+    if (isFinite(en) && en >= 0) { energyEUR = en; scrivi('c3d-energia', String(en)); }
+    if (g.valuta === 'EUR' || g.valuta === 'USD') { currency = g.valuta; el.currency.value = currency; scrivi('c3d-valuta', currency); makeMoney(); }
+    showEnergy();
+    var gp = g.stampante && CONFIG.printers.length ? findPrinter(g.stampante, '', '') : null;
+    if (gp) setPicker(el.tech, el.brand, el.printer, gp.id);
+    var gm = g.materiale ? findMaterial(g.materiale, '', gp ? gp.tech : null) : null;
+    if (gm) el.material.value = gm.id;
+    if (g.riempimento !== undefined && isFinite(+g.riempimento)) el.infill.value = Math.min(100, Math.max(0, +g.riempimento));
+    if (g.svuotati !== undefined) el.hollow.checked = isYes(g.svuotati);
+    if (g.supporti !== undefined) el.supports.checked = isYes(g.supporti);
+  }
+  function importExcel(file) {
+    if (!file) return;
+    if (file.size > 5 * 1024 * 1024) { xlsMsg(T('xlsImportBad'), 'error'); return; }
+    xlsMsg(T('xlsLoading'));
+    Promise.all([loadXLSX(), file.arrayBuffer()]).then(function (res) {
+      var X = res[0], wb;
+      try { wb = X.read(new Uint8Array(res[1]), { type: 'array', cellFormula: false, cellHTML: false }); }
+      catch (e) { xlsMsg(T('xlsImportBad'), 'error'); return; }
+      // Impostazioni generali dal foglio nascosto, se c'è
+      var g = {};
+      if (wb.Sheets[SHEET_HIDDEN]) {
+        X.utils.sheet_to_json(wb.Sheets[SHEET_HIDDEN], { header: 1, defval: '' }).slice(1).forEach(function (r) {
+          var k = String(r[0]).trim();
+          if (/^[a-z_]+$/.test(k)) g[k] = r[1];
+        });
+      }
+      // Righe dei file: il primo foglio che contiene nomi di file .stl
+      var list = [];
+      wb.SheetNames.some(function (nm) {
+        if (nm === SHEET_HIDDEN) return false;
+        var rows = X.utils.sheet_to_json(wb.Sheets[nm], { header: 1, defval: '', raw: true });
+        var found = rows.slice(1).map(readRow).filter(Boolean);
+        if (found.length) { list = found; return true; }
+        return false;
+      });
+      if (!list.length && !Object.keys(g).length) { xlsMsg(T('xlsImportNone'), 'error'); return; }
+      applyGlobals(g);
+      // Ogni riga va al primo file caricato con lo stesso nome; le altre restano in attesa
+      var used = {}, applied = 0;
+      pending = [];
+      list.forEach(function (s) {
+        var m = models.filter(function (x) { return !used[x.id] && norm(x.name) === norm(s.name); })[0];
+        if (m) { used[m.id] = true; applySettings(m, s); applied++; }
+        else pending.push(s);
+      });
+      refreshMaterialOptions(); updateGrid(); update();
+      var txt = !list.length ? T('xlsImportGlobals') : applied ? T('xlsImportDone', { n: applied, tot: list.length }) : T('xlsImportWaiting', { tot: list.length });
+      if (pending.length) {
+        var names = pending.slice(0, 4).map(function (s) { return s.name; }).join(', ') + (pending.length > 4 ? '…' : '');
+        txt += ' ' + T('xlsImportPending', { files: names });
+      }
+      xlsMsg(txt, pending.length ? 'warn' : 'ok');
+    }).catch(function () { xlsMsg(T('xlsLoadError'), 'error'); });
+  }
+  if (el.xlsOut) el.xlsOut.addEventListener('click', exportExcel);
+  if (el.xlsIn && el.xlsFile) {
+    el.xlsIn.addEventListener('click', function () { el.xlsFile.click(); });
+    el.xlsFile.addEventListener('change', function () { importExcel(el.xlsFile.files[0]); el.xlsFile.value = ''; });
+  }
 
   // ---------- Anteprima 3D (three.js caricato solo quando serve) ----------
   var view = null;

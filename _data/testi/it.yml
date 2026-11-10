@@ -51,6 +51,8 @@ pagina:
   costo_totale: Costo totale
   calcola: Calcola
   nota: Stima indicativa calcolata sulla geometria dei file.
+  scarica_excel: "⬇ Scarica Excel"
+  importa_excel: "⬆ Importa impostazioni"
 
 js:
   notAvailable: " (non disponibile)"
@@ -107,3 +109,49 @@ js:
   ariaBrand: "Marca della stampante ({name})"
   ariaModel: "Modello della stampante ({name})"
   ariaRemove: "Rimuovi {name}"
+  xlsLoading: Preparo il file Excel…
+  xlsLoadError: "Non riesco a caricare il modulo Excel: controlla la connessione e riprova."
+  xlsImportBad: "Il file non è un foglio Excel valido."
+  xlsImportNone: "Nel file non ho trovato impostazioni del simulatore."
+  xlsImportDone: "Impostazioni importate: applicate a {n} file su {tot}."
+  xlsImportWaiting: "Impostazioni importate per {tot} file."
+  xlsImportGlobals: Impostazioni generali importate.
+  xlsImportPending: "Carica {files}: riceveranno le impostazioni importate."
+  xlsFileName: "simulatore-3d-{date}.xlsx"
+  xlsSheetFiles: File
+  xlsSheetSummary: Riepilogo
+  xlsTitle: Simulatore 3D, costo di stampa
+  xlsDate: Data
+  xlsCurrency: Valuta
+  xlsRate: "cambio 1 € = {rate} $"
+  xlsEnergyPrice: "Costo energia ({unit})"
+  xlsQuality: Qualità
+  xlsUnit: Unità dei file
+  xlsDefPrinter: Stampante per i nuovi file
+  xlsDefMaterial: Materiale per i nuovi file
+  xlsWeight: Peso totale (g)
+  xlsTime: Tempo totale
+  xlsTotal: Totale
+  xlsYes: Sì
+  xlsNo: "No"
+  xlsColFile: File
+  xlsColTech: Tecnologia
+  xlsColBrand: Marca
+  xlsColModel: Modello
+  xlsColMaterial: Materiale
+  xlsColInfill: Riempimento %
+  xlsColSize: Dimensioni (mm)
+  xlsColGrams: Peso a pezzo (g)
+  xlsColMl: Resina a pezzo (ml)
+  xlsColTime: Tempo a pezzo
+  xlsColMatCost: Materiale a pezzo
+  xlsColEnergy: Energia a pezzo
+  xlsColPost: Lavaggio a pezzo
+  xlsColEach: Costo a pezzo
+  xlsColTotal: Costo totale
+  xlsColKwh: kWh a pezzo
+  xlsColNote: Avvisi
+  xlsColPrinterId: Codice stampante
+  xlsColMaterialId: Codice materiale
+  xlsNoteEstimate: "Stima indicativa calcolata sulla geometria dei file. Il totale comprende anche il riscaldamento delle stampanti, che non è ripartito sui singoli file."
+  xlsNoteImport: "Puoi modificare pezzi, scala, riempimento, interno, supporti, materiale e stampante nel foglio File e reimportarlo nel simulatore: i file STL vanno ricaricati, con lo stesso nome."
