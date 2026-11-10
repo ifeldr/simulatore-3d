@@ -32,6 +32,8 @@ pagina:
   marca: Marca
   modello: Modello
   materiale: Materiale
+  prezzo_bobina: Prezzo bobina
+  prezzo_ripristina: Ripristina
   riempimento: Riempimento interno
   svuotati: Pezzi svuotati (meno resina, servono fori di drenaggio)
   supporti: Con supporti
@@ -155,3 +157,9 @@ js:
   xlsColMaterialId: Codice materiale
   xlsNoteEstimate: "Stima indicativa calcolata sulla geometria dei file. Il totale comprende anche il riscaldamento delle stampanti, che non è ripartito sui singoli file."
   xlsNoteImport: "Puoi modificare pezzi, scala, riempimento, interno, supporti, materiale e stampante nel foglio File e reimportarlo nel simulatore: i file STL vanno ricaricati, con lo stesso nome."
+  priceSpool: Prezzo bobina
+  priceResin: Prezzo resina
+  priceDefault: "Prezzo indicativo: metti quello che paghi tu, vale per tutti i file in {material}."
+  priceCustom: "Il tuo prezzo per {material}, ricordato su questo browser (predefinito {def})."
+  xlsPrices: "Prezzi dei materiali ({unit})"
+  xlsPriceMine: il mio prezzo

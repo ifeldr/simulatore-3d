@@ -1,4 +1,4 @@
-/* Calcolatore costo stampa 3D da file STL, v1.6 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
+/* Calcolatore costo stampa 3D da file STL, v1.7 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
 (function () {
   'use strict';
   // Percorso di questo script: serve per caricare la libreria Excel che sta nella stessa cartella
@@ -201,6 +201,7 @@
     infillOut: $('c3d-infill-out'), unit: $('c3d-unit'), supports: $('c3d-supports'),
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
     time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta'),
+    price: $('c3d-price'), priceName: $('c3d-price-name'), priceUnit: $('c3d-price-unit'), priceHelp: $('c3d-price-help'), priceReset: $('c3d-price-reset'),
     xlsOut: $('c3d-xls-out'), xlsIn: $('c3d-xls-in'), xlsFile: $('c3d-xls-file'), xlsMsg: $('c3d-xls-msg')
   };
 
@@ -306,6 +307,28 @@
   }
   showEnergy();
   function energyPrice() { return energyEUR; }
+
+  // Prezzo del materiale: chi usa il simulatore può mettere quello che paga davvero la bobina (o la resina).
+  // Vale per tutti i file con quel materiale, si salva in euro su questo browser ed è indicato per nome
+  // (non per posizione), così resta valido anche se l'elenco dei materiali cambia.
+  var myPrices = {};
+  try { var mp = JSON.parse(leggi('c3d-prezzi') || '{}'); if (mp && typeof mp === 'object') Object.keys(mp).forEach(function (k) { var v = +mp[k]; if (isFinite(v) && v >= 0) myPrices[k] = v; }); } catch (e) {}
+  function matKey(mt) { return mt.baseName || mt.name; }
+  function priceKg(mt) { var k = matKey(mt); return k in myPrices ? myPrices[k] : mt.pricePerKg; }
+  function savePrices() { scrivi('c3d-prezzi', JSON.stringify(myPrices)); }
+  function showPrice(force) {
+    if (!el.price) return;
+    var mt = matById(el.material.value), custom = matKey(mt) in myPrices;
+    var sym = currency === 'USD' ? '$' : '€';
+    if (force || document.activeElement !== el.price) el.price.value = String(Math.round(priceKg(mt) * rate() * 100) / 100);
+    el.priceName.textContent = mt.tech === 'resina' ? T('priceResin') : T('priceSpool');
+    el.priceUnit.textContent = sym + '/kg';
+    el.price.classList.toggle('is-custom', custom);
+    el.priceHelp.textContent = custom
+      ? T('priceCustom', { material: mt.name, def: money.format(mt.pricePerKg) + '/kg' })
+      : T('priceDefault', { material: mt.name });
+    el.priceReset.hidden = !custom;
+  }
   function printerSpeed(p) { return p ? p.speed : 1; }
   function techOf(p) { return p ? p.tech : 'filamento'; }
   // Un materiale è stampabile se la stampante non ha un elenco o se il nome compare nell'elenco
@@ -342,6 +365,7 @@
       var resin = techOf(printerOf(m)) === 'resina';
       m.row.infLabel.hidden = resin; m.row.holLabel.hidden = !resin;
     });
+    showPrice();
     var resinDef = techOf(printer()) === 'resina';
     el.infillField.hidden = resinDef; el.hollowField.hidden = !resinDef;
     var p = printer();
@@ -456,7 +480,7 @@
     var b = buildVolume(pr).slice().sort(function (x, y) { return x - y; });
     return {
       V: V, size: size, grams: grams, hours: hours,
-      mat: grams / 1000 * mt.pricePerKg * (1 + CONFIG.waste) * k,
+      mat: grams / 1000 * priceKg(mt) * (1 + CONFIG.waste) * k,
       mach: hours * machineRate(pr) * k,
       kwh: hours * powerKW(pr),
       energy: hours * powerKW(pr) * energyPrice(),
@@ -479,7 +503,7 @@
       resin: true, V: V, size: size, grams: grams, ml: ml,
       layers: Math.ceil(size[2] / o.quality.resinLayer), footprint: size[0] * size[1],
       hours: 0, mach: 0, kwh: 0, energy: 0, post: 0,
-      mat: grams / 1000 * mt.pricePerKg * (1 + CONFIG.waste) * k,
+      mat: grams / 1000 * priceKg(mt) * (1 + CONFIG.waste) * k,
       fits: a[0] <= b[0] && a[1] <= b[1] && a[2] <= b[2]
     };
   }
@@ -802,7 +826,21 @@
     t.addEventListener('drop', function (e) { handleFiles(e.dataTransfer.files); });
   });
 
-  el.material.addEventListener('change', update);
+  el.material.addEventListener('change', function () { showPrice(); update(); });
+  if (el.price) {
+    el.price.addEventListener('input', function () {
+      var v = parseFloat(String(el.price.value).replace(',', '.'));
+      if (!(isFinite(v) && v >= 0)) return;
+      var mt = matById(el.material.value), eur = v / rate();
+      if (Math.abs(eur - mt.pricePerKg) < 0.005) delete myPrices[matKey(mt)]; else myPrices[matKey(mt)] = eur;
+      savePrices(); showPrice(); update();
+    });
+    el.price.addEventListener('blur', function () { showPrice(true); });
+    el.priceReset.addEventListener('click', function () {
+      delete myPrices[matKey(matById(el.material.value))];
+      savePrices(); showPrice(); update();
+    });
+  }
   // La stampante in alto vale per i nuovi file: quelli già caricati mantengono la loro (vedi "Applica a tutti")
   if (CONFIG.printers.length) wirePicker(el.tech, el.brand, el.printer, function () { refreshMaterialOptions(); update(); });
   el.hollow.addEventListener('change', update);
@@ -835,11 +873,12 @@
     if (isFinite(v) && v >= 0) { energyEUR = v / rate(); scrivi('c3d-energia', String(energyEUR)); }
     update();
   });
+  showPrice();
   el.currency.value = currency;
   el.currency.addEventListener('change', function () {
     currency = el.currency.value === 'USD' ? 'USD' : 'EUR';
     scrivi('c3d-valuta', currency);
-    makeMoney(); showEnergy(); update();
+    makeMoney(); showEnergy(); showPrice(true); update();
   });
 
   // ---------- Excel: scarica e importa le impostazioni ----------
@@ -924,17 +963,27 @@
       (last.rows || []).forEach(function (row) { sum.push([row[0], row[1] * R]); });
       sum.push([T('total'), last.total * R]);
       var lastMoney = sum.length;
+      // Prezzi dei materiali usati, con l'indicazione di quelli personalizzati
+      sum.push([], [T('xlsPrices', { unit: (currency === 'USD' ? '$' : '€') + '/kg' })]);
+      var priceFirst = sum.length + 1, seen = {};
+      models.forEach(function (m) {
+        var mt = matById(m.materialId); if (seen[mt.id]) return; seen[mt.id] = 1;
+        sum.push([mt.name + (matKey(mt) in myPrices ? ' (' + T('xlsPriceMine') + ')' : ''), priceKg(mt) * R]);
+      });
+      var priceLast = sum.length;
       sum.push([], [T('xlsNoteEstimate')], [T('xlsNoteImport')]);
       var ws2 = X.utils.aoa_to_sheet(sum);
       ws2['B14'].z = tf;
       for (var j = firstMoney; j <= lastMoney; j++) if (ws2['B' + j]) ws2['B' + j].z = cf;
+      for (var jj = priceFirst; jj <= priceLast; jj++) if (ws2['B' + jj]) ws2['B' + jj].z = cf;
       ws2['!cols'] = [{ wch: 42 }, { wch: 30 }];
 
       // Foglio 3 (nascosto): impostazioni generali in forma leggibile dal simulatore
       var ws3 = X.utils.aoa_to_sheet([
         ['chiave', 'valore'], ['versione', 1], ['qualita', q.id], ['unita', +el.unit.value || 1], ['energia_eur_kwh', energyEUR], ['valuta', currency],
         ['stampante', pDef ? printerCode(pDef) : ''], ['materiale', matById(el.material.value).baseName || matById(el.material.value).name], ['riempimento', +el.infill.value],
-        ['svuotati', el.hollow.checked ? 1 : 0], ['supporti', el.supports.checked ? 1 : 0]
+        ['svuotati', el.hollow.checked ? 1 : 0], ['supporti', el.supports.checked ? 1 : 0],
+        ['prezzi_eur_kg', JSON.stringify(myPrices)]
       ]);
       var wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, T('xlsSheetFiles'));
@@ -1007,6 +1056,15 @@
     if (isFinite(en) && en >= 0) { energyEUR = en; scrivi('c3d-energia', String(en)); }
     if (g.valuta === 'EUR' || g.valuta === 'USD') { currency = g.valuta; el.currency.value = currency; scrivi('c3d-valuta', currency); makeMoney(); }
     showEnergy();
+    if (g.prezzi_eur_kg !== undefined && String(g.prezzi_eur_kg).trim() !== '') {
+      try {
+        var gpz = JSON.parse(String(g.prezzi_eur_kg)), nuovi = {};
+        if (gpz && typeof gpz === 'object') {
+          Object.keys(gpz).forEach(function (k) { var v = +gpz[k]; if (isFinite(v) && v >= 0 && v <= 10000) nuovi[k] = v; });
+          myPrices = nuovi; savePrices();
+        }
+      } catch (e) {}
+    }
     var gp = g.stampante && CONFIG.printers.length ? findPrinter(g.stampante, '', '') : null;
     if (gp) setPicker(el.tech, el.brand, el.printer, gp.id);
     var gm = g.materiale ? findMaterial(g.materiale, '', gp ? gp.tech : null) : null;
@@ -1050,7 +1108,7 @@
         if (m) { used[m.id] = true; applySettings(m, s); applied++; }
         else pending.push(s);
       });
-      refreshMaterialOptions(); updateGrid(); update();
+      refreshMaterialOptions(); showPrice(true); updateGrid(); update();
       var txt = !list.length ? T('xlsImportGlobals') : applied ? T('xlsImportDone', { n: applied, tot: list.length }) : T('xlsImportWaiting', { tot: list.length });
       if (pending.length) {
         var names = pending.slice(0, 4).map(function (s) { return s.name; }).join(', ') + (pending.length > 4 ? '…' : '');

@@ -32,6 +32,8 @@ pagina:
   marca: Brand
   modello: Model
   materiale: Material
+  prezzo_bobina: Spool price
+  prezzo_ripristina: Reset
   riempimento: Infill
   svuotati: Hollow parts (less resin, drain holes needed)
   supporti: With supports
@@ -155,3 +157,9 @@ js:
   xlsColMaterialId: Material code
   xlsNoteEstimate: "Rough estimate based on the geometry of the files. The total also includes printer warm-up, which isn't split across the individual files."
   xlsNoteImport: "You can change parts, scale, infill, interior, supports, material and printer in the Files sheet and import it back into the simulator: the STL files must be uploaded again, with the same names."
+  priceSpool: Spool price
+  priceResin: Resin price
+  priceDefault: "Typical price: enter what you pay, it applies to every file in {material}."
+  priceCustom: "Your price for {material}, remembered on this browser (default {def})."
+  xlsPrices: "Material prices ({unit})"
+  xlsPriceMine: my price

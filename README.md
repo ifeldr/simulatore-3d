@@ -38,6 +38,14 @@ e il costo di lavaggio e polimerizzazione per ogni stampa.
 - Il visitatore sceglie tra euro e dollari in entrambe le lingue. Tutti gli importi del file sono in
   euro e vengono convertiti con `cambio_eur_usd` (1 € = X $): aggiornalo ogni tanto.
 
+## Prezzo dei materiali
+
+- Accanto al materiale c'è il campo **Prezzo bobina** (o **Prezzo resina**) in €/kg o $/kg: chi usa il simulatore
+  mette quello che paga davvero. Vale per tutti i file con quel materiale.
+- Il prezzo viene ricordato nel browser del visitatore (chiave `c3d-prezzi`, in euro, indicato per nome del materiale)
+  e finisce anche nel file Excel, quindi si ripristina con "Importa impostazioni". **Ripristina** torna al prezzo predefinito.
+- I prezzi predefiniti restano quelli di `prezzo_kg` in `_data/calcolatore_3d.yml`.
+
 ## Excel
 
 - **Scarica Excel** crea un file `.xlsx` con un foglio per i file (una riga per STL, con impostazioni,

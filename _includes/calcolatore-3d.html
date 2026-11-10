@@ -59,8 +59,17 @@
           <p class="c3d-help c3d-printer-info" id="c3d-printer-info"></p>
         </div>
         <div class="c3d-field">
-          <label class="c3d-label" for="c3d-material">{{ t.materiale }}</label>
-          <select id="c3d-material"></select>
+          <div class="c3d-row c3d-mat-row">
+            <div>
+              <label class="c3d-label" for="c3d-material">{{ t.materiale }}</label>
+              <select id="c3d-material"></select>
+            </div>
+            <div>
+              <label class="c3d-label" for="c3d-price"><span><span id="c3d-price-name">{{ t.prezzo_bobina }}</span> (<span id="c3d-price-unit">€/kg</span>)</span></label>
+              <input type="number" id="c3d-price" min="0" max="10000" step="0.5" inputmode="decimal">
+            </div>
+          </div>
+          <p class="c3d-help c3d-price-help"><span id="c3d-price-help"></span> <button type="button" class="c3d-linkbtn" id="c3d-price-reset" hidden>{{ t.prezzo_ripristina }}</button></p>
         </div>
         <div class="c3d-field" id="c3d-infill-field">
           <label class="c3d-label" for="c3d-infill">{{ t.riempimento }} <output id="c3d-infill-out" for="c3d-infill">20%</output></label>
