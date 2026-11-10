@@ -71,6 +71,13 @@ e il costo di lavaggio e polimerizzazione per ogni stampa.
 - Tutto avviene nel browser con [SheetJS](https://sheetjs.com) (licenza Apache 2.0), salvato in
   `assets/calcolatore-3d/vendor/` e caricato solo al primo clic.
 
+## Domande frequenti
+
+Le domande sotto il simulatore sono in `_data/testi/it.yml` e `_data/testi/en.yml`, alla voce `faq`:
+ogni domanda ha `d` (domanda) e `r` (risposta, in Markdown). La pagina genera anche i dati strutturati
+`FAQPage` per i motori di ricerca. Se cambi un valore in `_data/calcolatore_3d.yml` (scarto, pareti,
+riscaldamento, supporti), aggiorna anche la risposta che lo cita.
+
 ## File
 
 - `it/index.html`, `en/index.html`: le due versioni della pagina (usano `_layouts/simulatore.html`)

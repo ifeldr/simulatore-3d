@@ -176,3 +176,61 @@ js:
   slicedNote: Riempimento, supporti e scala sono quelli scelti nello slicer.
   slicedLocked: La scala è già decisa nel file dello slicer
   slicedTech: Un G-code si stampa solo a filamento
+
+# Domande frequenti sotto il simulatore. Le risposte accettano il Markdown (grassetto, elenchi, link).
+faq:
+  titolo: Domande frequenti
+  voci:
+    - d: Come viene calcolato il costo?
+      r: |
+        Il simulatore calcola solo il **costo reale** della stampa, senza guadagni né IVA. Somma quattro voci:
+
+        - **materiale**: grammi (o ml di resina) × prezzo al kg, più un 5% di scarto per spurghi, skirt e prove;
+        - **usura della stampante**: ore di stampa × un costo orario che dipende dal modello (ugelli, cinghie, piatto, manutenzione);
+        - **energia elettrica**: ore × consumo medio della stampante × il costo al kWh che inserisci;
+        - **lavaggio e polimerizzazione**, solo per la resina: un importo fisso per ogni piatto stampato.
+    - d: Come stima peso e tempo da un file STL o 3MF?
+      r: |
+        Dal modello calcola **volume** e **superficie**. Le pareti esterne e gli strati pieni sopra e sotto (circa 0,8 mm) sono considerati pieni, l'interno viene riempito con la percentuale scelta; i supporti aggiungono il 15% di materiale e il 10% di tempo.
+
+        Il **tempo** dipende dal volume da stampare, dalla qualità (altezza dello strato), dal materiale (il TPU va più piano) e dalla velocità della stampante, più qualche secondo a ogni cambio di strato e 5 minuti di riscaldamento per stampante.
+
+        Con la **resina** il tempo dipende invece dall'altezza: tutti i pezzi sullo stesso piatto si stampano insieme, quindi conta il numero di strati del pezzo più alto. Un pezzo svuotato usa pareti di 2 mm.
+    - d: Quanto è precisa la stima?
+      r: |
+        Con un STL o un 3MF di progetto è una **stima indicativa**: rispetto allo slicer può scostarsi anche del 20–30%, a seconda di forma del pezzo, impostazioni e stampante.
+
+        Se vuoi un numero esatto, carica il **G-code** o il **3MF già processato** dallo slicer: tempo e grammi sono quelli calcolati dallo slicer, e il simulatore aggiunge solo i costi.
+    - d: Quali file posso caricare?
+      r: |
+        - **STL**, binario o di testo;
+        - **3MF** di progetto (Bambu Studio, OrcaSlicer, PrusaSlicer e altri), con tutti gli oggetti del piatto;
+        - **3MF già processato** (`.gcode.3mf`) di Bambu Studio e Orca;
+        - **G-code** (`.gcode`, `.gco`, `.g`) di PrusaSlicer, Bambu Studio, OrcaSlicer, SuperSlicer, Cura, Simplify3D e ideaMaker, e il G-code binario di Prusa (`.bgcode`).
+
+        Puoi caricare fino a 20 file insieme. I file delle stampanti a resina già processati (`.ctb`, `.goo`, `.pwmx`) non sono supportati: per la resina usa STL o 3MF.
+    - d: Cosa cambia se carico un G-code?
+      r: |
+        Tempo e filamento sono quelli calcolati dal tuo slicer, per tutti i piatti del file. Scala, riempimento e supporti sono già decisi nello slicer, quindi qui sono bloccati.
+
+        Puoi comunque scegliere la **stampante** (per usura ed energia), il **materiale** (per il prezzo) e il **numero di pezzi**. Se il file indica stampante e filamento, il simulatore li seleziona da solo.
+    - d: I miei file vengono inviati da qualche parte?
+      r: |
+        No. I file vengono letti **solo nel tuo browser** e non lasciano il tuo computer. Anche i prezzi che inserisci e le altre preferenze restano salvati solo su questo browser.
+    - d: Posso usare i miei prezzi?
+      r: |
+        Sì. Accanto al materiale c'è il campo **Prezzo bobina** (o **Prezzo resina**): metti quello che paghi tu e vale per tutti i file con quel materiale. Allo stesso modo puoi cambiare il **costo dell'energia** al kWh. Entrambi vengono ricordati su questo browser; **Ripristina** torna al prezzo predefinito.
+    - d: Come salvo un calcolo e lo riprendo dopo?
+      r: |
+        Con **Scarica Excel** ottieni un file con una riga per ogni file caricato (impostazioni, peso, tempo e costi) e un riepilogo. Più avanti, con **Importa impostazioni**, il simulatore rilegge il file e rimette tutto com'era, compresi i tuoi prezzi.
+
+        I modelli vanno ricaricati, con lo stesso nome: il browser non può conservarli. Puoi anche modificare il file in Excel (pezzi, scala, riempimento, materiale, stampante) prima di reimportarlo.
+    - d: Perché vedo un avviso su un file?
+      r: |
+        - **Supera l'area di stampa**: il pezzo non entra nella stampante scelta. Riduci la scala o scegli una stampante più grande.
+        - **Materiale non stampabile**: la stampante non supporta quel materiale (per esempio l'ABS su una stampante aperta).
+        - **Dimensioni strane**: il file è molto piccolo o molto grande, probabilmente è in centimetri o in pollici. Cambia **Unità dei file**.
+        - **Il modello non ha volume**: la mesh non è chiusa. Riparala nel programma di modellazione o nello slicer.
+    - d: Come funziona il cambio tra euro e dollari?
+      r: |
+        Tutti i prezzi sono in euro e vengono convertiti con un cambio fisso, indicato anche nel file Excel. È una conversione indicativa: per un calcolo preciso inserisci direttamente i tuoi prezzi nella valuta che usi.

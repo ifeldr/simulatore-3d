@@ -176,3 +176,61 @@ js:
   slicedNote: Infill, supports and scale are the ones set in the slicer.
   slicedLocked: Scale is already set in the slicer file
   slicedTech: G-code is filament only
+
+# Frequently asked questions below the simulator. Answers accept Markdown (bold, lists, links).
+faq:
+  titolo: Frequently asked questions
+  voci:
+    - d: How is the cost calculated?
+      r: |
+        The simulator only works out the **real cost** of a print, with no profit and no tax. It adds up four items:
+
+        - **material**: grams (or ml of resin) × price per kg, plus 5% waste for purges, skirts and test prints;
+        - **printer wear**: print hours × an hourly cost that depends on the model (nozzles, belts, build plate, maintenance);
+        - **electricity**: hours × the printer's average power draw × the price per kWh you enter;
+        - **washing and curing**, for resin only: a fixed amount for each plate printed.
+    - d: How does it estimate weight and time from an STL or 3MF?
+      r: |
+        It calculates the model's **volume** and **surface area**. Outer walls and solid top and bottom layers (about 0.8 mm) are counted as solid, the inside is filled with the infill you choose, and supports add 15% material and 10% time.
+
+        **Time** depends on the volume to print, the quality (layer height), the material (TPU is slower) and the printer's speed, plus a few seconds per layer change and 5 minutes of warm-up per printer.
+
+        With **resin**, time depends on height instead: all parts on the same plate print together, so what counts is the number of layers of the tallest part. A hollow part uses 2 mm walls.
+    - d: How accurate is the estimate?
+      r: |
+        With an STL or a 3MF project it's a **rough estimate**: it can differ from your slicer by 20–30% or so, depending on the part's shape, the settings and the printer.
+
+        For an exact figure, upload the **G-code** or the **sliced 3MF**: time and grams are the ones your slicer calculated, and the simulator only adds the costs.
+    - d: Which files can I upload?
+      r: |
+        - **STL**, binary or ASCII;
+        - **3MF** projects (Bambu Studio, OrcaSlicer, PrusaSlicer and others), with every object on the plate;
+        - **sliced 3MF** files (`.gcode.3mf`) from Bambu Studio and Orca;
+        - **G-code** (`.gcode`, `.gco`, `.g`) from PrusaSlicer, Bambu Studio, OrcaSlicer, SuperSlicer, Cura, Simplify3D and ideaMaker, and Prusa binary G-code (`.bgcode`).
+
+        You can upload up to 20 files at once. Sliced files for resin printers (`.ctb`, `.goo`, `.pwmx`) aren't supported: for resin, use STL or 3MF.
+    - d: What changes if I upload a G-code?
+      r: |
+        Time and filament are the ones your slicer calculated, for every plate in the file. Scale, infill and supports are already set in the slicer, so they're locked here.
+
+        You can still pick the **printer** (for wear and electricity), the **material** (for the price) and the **number of parts**. If the file names the printer and filament, the simulator selects them for you.
+    - d: Are my files sent anywhere?
+      r: |
+        No. Files are read **only in your browser** and never leave your computer. The prices you enter and your other preferences are also stored only on this browser.
+    - d: Can I use my own prices?
+      r: |
+        Yes. Next to the material there's a **Spool price** (or **Resin price**) field: enter what you pay and it applies to every file in that material. You can change the **electricity price** per kWh the same way. Both are remembered on this browser; **Reset** goes back to the default price.
+    - d: How do I save a calculation and pick it up later?
+      r: |
+        **Download Excel** gives you a file with one row per uploaded file (settings, weight, time and costs) and a summary. Later, **Import settings** reads the file back and restores everything, including your prices.
+
+        The models must be uploaded again, with the same names: the browser can't keep them. You can also edit the file in Excel (parts, scale, infill, material, printer) before importing it.
+    - d: Why do I see a warning on a file?
+      r: |
+        - **Exceeds the build volume**: the part doesn't fit the chosen printer. Reduce the scale or pick a bigger printer.
+        - **Material not printable**: the printer doesn't support that material (for example ABS on an open-frame printer).
+        - **Odd dimensions**: the file is very small or very large, it's probably in centimetres or inches. Change **File units**.
+        - **The model has no volume**: the mesh isn't closed. Repair it in your modelling software or slicer.
+    - d: How does switching between euros and dollars work?
+      r: |
+        All prices are in euros and are converted with a fixed exchange rate, which is also shown in the Excel file. It's an approximate conversion: for an accurate figure, enter your own prices in the currency you use.

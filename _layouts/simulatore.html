@@ -52,6 +52,25 @@ layout: null
 
   {% include calcolatore-3d.html %}
 
+  {%- if testi.faq and testi.faq.voci.size > 0 %}
+  <section class="faq" aria-labelledby="faq-titolo">
+    <h2 id="faq-titolo">{{ testi.faq.titolo }}</h2>
+    {%- for v in testi.faq.voci %}
+    <details>
+      <summary>{{ v.d }}</summary>
+      <div class="faq-risposta">{{ v.r | markdownify }}</div>
+    </details>
+    {%- endfor %}
+  </section>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"FAQPage","inLanguage":{{ testi.lingua | jsonify }},"mainEntity":[
+    {%- for v in testi.faq.voci -%}
+    {"@type":"Question","name":{{ v.d | jsonify }},"acceptedAnswer":{"@type":"Answer","text":{{ v.r | markdownify | strip_html | strip_newlines | jsonify }}}}{% unless forloop.last %},{% endunless %}
+    {%- endfor -%}
+  ]}
+  </script>
+  {%- endif %}
+
 </main>
 
 <footer class="piede">
