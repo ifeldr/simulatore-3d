@@ -48,6 +48,8 @@ pagina:
   euro: Euro (€)
   dollari: Dollari ($)
   energia: Energia
+  fallite: Stampe fallite
+  fallite_aiuto: "Quota di costo in più per coprire le stampe da rifare: 5 vuol dire che in media una stampa su venti va ripetuta."
   vuoto: Carica uno o più file STL, 3MF o G-code per vedere peso, tempo di stampa e costo.
   pezzi: Pezzi
   peso_totale: Peso totale
@@ -189,6 +191,9 @@ js:
   cmpNone: Nessuna alternativa compatibile.
   cmpMore: "Mostra tutte ({n})"
   cmpLess: Mostra meno
+  rowFail: "Stampe fallite ({pct}%)"
+  colorChanges: Cambi colore
+  ccHelp: "Quante volte cambia il filamento in un pezzo: lo indica lo slicer (in Bambu Studio e Orca è il numero di cambi filamento nell'anteprima). Ogni cambio aggiunge il filamento spurgato e il tempo del cambio."
 
 # Domande frequenti sotto il simulatore. Le risposte accettano il Markdown (grassetto, elenchi, link).
 faq:
@@ -196,15 +201,16 @@ faq:
   voci:
     - d: Come viene calcolato il costo?
       r: |
-        Il simulatore calcola solo il **costo reale** della stampa, senza guadagni né IVA. Somma quattro voci:
+        Il simulatore calcola solo il **costo reale** della stampa, senza guadagni né IVA. Somma queste voci:
 
         - **materiale**: grammi (o ml di resina) × prezzo al kg, più un 5% di scarto per spurghi, skirt e prove;
         - **usura della stampante**: ore di stampa × un costo orario che dipende dal modello (ugelli, cinghie, piatto, manutenzione);
         - **energia elettrica**: ore × consumo medio della stampante × il costo al kWh che inserisci;
-        - **lavaggio e polimerizzazione**, solo per la resina: un importo fisso per ogni piatto stampato.
+        - **lavaggio e polimerizzazione**, solo per la resina: un importo fisso per ogni piatto stampato;
+        - **stampe fallite**: una percentuale in più su tutto il resto, per coprire le stampe da rifare. Parte dal 5% e la cambi nel campo **Stampe fallite**: 0 la toglie.
     - d: Come stima peso e tempo da un file STL o 3MF?
       r: |
-        Dal modello calcola **volume** e **superficie**. Le pareti esterne e gli strati pieni sopra e sotto (circa 0,8 mm) sono considerati pieni, l'interno viene riempito con la percentuale scelta; i supporti aggiungono il 15% di materiale e il 10% di tempo.
+        Dal modello calcola **volume** e **superficie**. Le pareti esterne e gli strati pieni sopra e sotto (circa 0,8 mm) sono considerati pieni, l'interno viene riempito con la percentuale scelta; i supporti aggiungono il 15% di materiale e il 10% di tempo. Se il pezzo è multicolore, ogni **cambio colore** indicato nella sua riga aggiunge 0,8 g di filamento spurgato e un minuto di stampa; il numero di cambi lo trovi nell'anteprima dello slicer.
 
         Il **tempo** dipende dal volume da stampare, dalla qualità (altezza dello strato), dal materiale (il TPU va più piano) e dalla velocità della stampante, più qualche secondo a ogni cambio di strato e 5 minuti di riscaldamento per stampante.
 

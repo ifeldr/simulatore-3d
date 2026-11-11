@@ -17,6 +17,7 @@ preparazione_ordine: 0      # € fissi per stampa (0 = nessuno)
 ordine_minimo: 0            # importo minimo (0 = nessuno)
 ricarico_percento: 0        # ricarico su materiale e usura (0 = costo reale)
 scarto_percento: 5          # materiale perso in spurghi, skirt e prove
+stampe_fallite_percento: 5  # costo in più per le stampe da rifare (valore proposto nel campo "Stampe fallite" della pagina)
 iva_percento: 0             # 0 = nessuna IVA
 
 # ---------- Valuta ----------
@@ -143,6 +144,8 @@ max_mb_per_file: 80               # dimensione massima di ogni file
 spessore_pareti_mm: 0.8           # pareti e strati pieni (2 perimetri da 0.4 mm)
 supporti_materiale_percento: 15   # materiale in più per i file con supporti
 supporti_tempo_percento: 10       # tempo in più per i file con supporti
+cambio_colore_spurgo_g: 0.8       # filamento spurgato a ogni cambio colore (AMS, MMU o cambio manuale)
+cambio_colore_secondi: 60         # tempo di ogni cambio colore
 
 # ---------- Stampa a resina ----------
 resina_pareti_mm: 2.0                    # spessore delle pareti dei pezzi svuotati

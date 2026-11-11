@@ -61,6 +61,14 @@ e il costo di lavaggio e polimerizzazione per ogni stampa.
   e finisce anche nel file Excel, quindi si ripristina con "Importa impostazioni". **Ripristina** torna al prezzo predefinito.
 - I prezzi predefiniti restano quelli di `prezzo_kg` in `_data/calcolatore_3d.yml`.
 
+## Stampe fallite e cambi colore
+
+- **Stampe fallite**: campo nelle impostazioni generali, in percentuale (predefinito `stampe_fallite_percento`, 5%).
+  Aggiunge una voce al dettaglio dei costi pari a quella percentuale di materiale, usura, energia e lavaggio.
+  Il valore scelto viene ricordato nel browser e salvato nell'Excel.
+- **Cambi colore**: campo in ogni riga per i file a filamento (non per G-code e 3MF già processati, che includono
+  già gli spurghi). Ogni cambio aggiunge `cambio_colore_spurgo_g` grammi (0,8) e `cambio_colore_secondi` secondi (60).
+
 ## Confronto rapido
 
 Sotto il totale, il riquadro **Confronto rapido** prende il file selezionato nell'anteprima e mostra

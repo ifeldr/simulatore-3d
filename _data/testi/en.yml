@@ -48,6 +48,8 @@ pagina:
   euro: Euro (€)
   dollari: US dollar ($)
   energia: Electricity
+  fallite: Failed prints
+  fallite_aiuto: "Extra cost to cover prints that must be redone: 5 means that on average one print in twenty is repeated."
   vuoto: Upload one or more STL, 3MF or G-code files to see weight, print time and cost.
   pezzi: Parts
   peso_totale: Total weight
@@ -189,6 +191,9 @@ js:
   cmpNone: No compatible alternatives.
   cmpMore: "Show all ({n})"
   cmpLess: Show fewer
+  rowFail: "Failed prints ({pct}%)"
+  colorChanges: Colour changes
+  ccHelp: "How many times the filament changes in one part: your slicer shows it (in Bambu Studio and Orca it's the number of filament changes in the preview). Each change adds the purged filament and the time for the change."
 
 # Frequently asked questions below the simulator. Answers accept Markdown (bold, lists, links).
 faq:
@@ -196,15 +201,16 @@ faq:
   voci:
     - d: How is the cost calculated?
       r: |
-        The simulator only works out the **real cost** of a print, with no profit and no tax. It adds up four items:
+        The simulator only works out the **real cost** of a print, with no profit and no tax. It adds up these items:
 
         - **material**: grams (or ml of resin) × price per kg, plus 5% waste for purges, skirts and test prints;
         - **printer wear**: print hours × an hourly cost that depends on the model (nozzles, belts, build plate, maintenance);
         - **electricity**: hours × the printer's average power draw × the price per kWh you enter;
-        - **washing and curing**, for resin only: a fixed amount for each plate printed.
+        - **washing and curing**, for resin only: a fixed amount for each plate printed;
+        - **failed prints**: an extra percentage on everything else, to cover prints that must be redone. It starts at 5% and you can change it in the **Failed prints** field: 0 removes it.
     - d: How does it estimate weight and time from an STL or 3MF?
       r: |
-        It calculates the model's **volume** and **surface area**. Outer walls and solid top and bottom layers (about 0.8 mm) are counted as solid, the inside is filled with the infill you choose, and supports add 15% material and 10% time.
+        It calculates the model's **volume** and **surface area**. Outer walls and solid top and bottom layers (about 0.8 mm) are counted as solid, the inside is filled with the infill you choose, and supports add 15% material and 10% time. For a multi-colour part, each **colour change** entered in its row adds 0.8 g of purged filament and one minute of printing; your slicer's preview shows the number of changes.
 
         **Time** depends on the volume to print, the quality (layer height), the material (TPU is slower) and the printer's speed, plus a few seconds per layer change and 5 minutes of warm-up per printer.
 

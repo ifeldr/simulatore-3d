@@ -1,4 +1,4 @@
-/* Calcolatore costo stampa 3D da file STL, v1.9 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
+/* Calcolatore costo stampa 3D da file STL, v1.10 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
 (function () {
   'use strict';
   // Percorso di questo script: serve per caricare la libreria Excel che sta nella stessa cartella
@@ -17,6 +17,8 @@
     minOrder: 10.00,           // € imponibile minimo per ordine
     markup: 0.30,              // ricarico sul costo di materiale e macchina (0.30 = 30%)
     waste: 0.05,               // scarto materiale (spurghi, skirt, prove)
+    failRate: 0.05,            // stampe fallite: quota di costo in più per le stampe da rifare (modificabile nella pagina)
+    colorChange: { grams: 0.8, sec: 60 }, // filamento spurgato e tempo per ogni cambio colore
     maxFileMB: 80,             // dimensione massima di ogni file
     maxFiles: 20,              // numero massimo di file per preventivo
     buildVolume: [256, 256, 256], // area di stampa della stampante più grande, in mm
@@ -94,6 +96,9 @@
     set(CONFIG, 'minOrder', n(d.ordine_minimo, 0, 100000));
     set(CONFIG, 'markup', pct(d.ricarico_percento, 1000));
     set(CONFIG, 'waste', pct(d.scarto_percento, 100));
+    set(CONFIG, 'failRate', pct(d.stampe_fallite_percento, 100));
+    set(CONFIG.colorChange, 'grams', n(d.cambio_colore_spurgo_g, 0, 100));
+    set(CONFIG.colorChange, 'sec', n(d.cambio_colore_secondi, 0, 3600));
     var mf = n(d.max_file, 1, 100);
     set(CONFIG, 'maxFiles', mf === undefined ? undefined : Math.round(mf));
     set(CONFIG, 'maxFileMB', n(d.max_mb_per_file, 1, 500));
@@ -202,7 +207,7 @@
     empty: $('c3d-empty'), out: $('c3d-out'), pieces: $('c3d-pieces'), weight: $('c3d-weight'),
     time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta'),
     price: $('c3d-price'), priceName: $('c3d-price-name'), priceUnit: $('c3d-price-unit'), priceHelp: $('c3d-price-help'), priceReset: $('c3d-price-reset'),
-    thumb: $('c3d-thumb'), nothumb: $('c3d-nothumb'),
+    thumb: $('c3d-thumb'), nothumb: $('c3d-nothumb'), fail: $('c3d-fail'),
     cmp: $('c3d-cmp'), cmpFile: $('c3d-cmp-file'), cmpHelp: $('c3d-cmp-help'), cmpList: $('c3d-cmp-list'), cmpMore: $('c3d-cmp-more'),
     xlsOut: $('c3d-xls-out'), xlsIn: $('c3d-xls-in'), xlsFile: $('c3d-xls-file'), xlsMsg: $('c3d-xls-msg')
   };
@@ -310,6 +315,12 @@
   showEnergy();
   function energyPrice() { return energyEUR; }
 
+  // Stampe fallite: percentuale in più sul costo per coprire le stampe da rifare, ricordata su questo browser
+  var failPct = parseFloat(leggi('c3d-fallite'));
+  if (!(isFinite(failPct) && failPct >= 0 && failPct <= 100)) failPct = CONFIG.failRate * 100;
+  function failRate() { return failPct / 100; }
+  if (el.fail) el.fail.value = String(failPct);
+
   // Prezzo del materiale: chi usa il simulatore può mettere quello che paga davvero la bobina (o la resina).
   // Vale per tutti i file con quel materiale, si salva in euro su questo browser ed è indicato per nome
   // (non per posizione), così resta valido anche se l'elenco dei materiali cambia.
@@ -366,6 +377,7 @@
       }
       var resin = techOf(printerOf(m)) === 'resina';
       m.row.infLabel.hidden = resin || !!m.sliced; m.row.holLabel.hidden = !resin || !!m.sliced;
+      if (m.row.ccLabel) m.row.ccLabel.hidden = resin || !!m.sliced;
     });
     showPrice();
     var resinDef = techOf(printer()) === 'resina';
@@ -819,6 +831,10 @@
     var grams = printed / 1000 * mt.density;
     var sec = printed / (o.quality.flow * mt.speed * printerSpeed(pr)) + (size[2] / o.quality.layer) * CONFIG.layerOverheadSec;
     if (m.supports) sec *= 1 + CONFIG.supports.time;
+    // Cambi colore: filamento spurgato e tempo per ogni cambio
+    var cc = m.colorChanges || 0;
+    grams += cc * CONFIG.colorChange.grams;
+    sec += cc * CONFIG.colorChange.sec;
     var hours = sec / 3600;
     var k = 1 + CONFIG.markup;
     var a = size.slice().sort(function (x, y) { return x - y; });
@@ -934,7 +950,7 @@
       matBy[m.materialId] += r.mat * m.qty;
       mat += r.mat * m.qty; mach += r.mach * m.qty; energy += r.energy * m.qty; kwh += r.kwh * m.qty; grams += r.grams * m.qty; hours += r.hours * m.qty;
       if (!r.fits) tooBig++;
-      var piecePrice = ((r.mat + r.mach) * (1 - disc) + r.energy + (r.post || 0)) * (1 + CONFIG.vat);
+      var piecePrice = ((r.mat + r.mach) * (1 - disc) + r.energy + (r.post || 0)) * (1 + failRate()) * (1 + CONFIG.vat);
       m.row.meta.textContent = r.sliced
         ? T('slicedMeta', { time: fmtTime(r.hours), g: num1.format(r.grams), price: money.format(piecePrice) })
         : fmtSize(r.size) + ', ' + (r.resin ? T('mlResin', { n: num1.format(r.ml) }) : num1.format(r.grams) + ' g') + ', ' + T('each', { price: money.format(piecePrice) });
@@ -956,7 +972,8 @@
     });
 
     var discount = (mat + mach) * disc;
-    var net = mat + mach - discount + energy + post + CONFIG.setupFee;
+    var fail = (mat + mach - discount + energy + post) * failRate();
+    var net = mat + mach - discount + energy + post + fail + CONFIG.setupFee;
     var minAdj = net < CONFIG.minOrder ? CONFIG.minOrder - net : 0;
     net += minAdj;
     var vat = net * CONFIG.vat, total = net + vat;
@@ -975,6 +992,7 @@
     rows.push([T('rowWear'), mach]);
     rows.push([T('rowEnergy', { kwh: kwh < 1 ? num2.format(kwh) : num1.format(kwh) }), energy]);
     if (post > 0) rows.push([T('rowPost'), post]);
+    if (fail > 0) rows.push([T('rowFail', { pct: num1.format(failPct) }), fail]);
     if (discount > 0) rows.push([T('rowDiscount', { pct: num0.format(disc * 100) }), -discount]);
     if (CONFIG.setupFee > 0) rows.push([T('rowSetup'), CONFIG.setupFee]);
     if (minAdj > 0) rows.push([T('rowMinimum'), minAdj]);
@@ -1015,7 +1033,7 @@
   function soloEach(c, o) {
     var r = estimatePiece(c, o);
     if (r.resin) allocateResin([{ m: c, r: r }]);
-    return { r: r, each: ((r.mat + r.mach) + r.energy + (r.post || 0)) * (1 + CONFIG.vat) };
+    return { r: r, each: ((r.mat + r.mach) + r.energy + (r.post || 0)) * (1 + failRate()) * (1 + CONFIG.vat) };
   }
   function clone(m, k, v) { var c = {}; for (var x in m) c[x] = m[x]; c[k] = v; return c; }
   function renderCompare() {
@@ -1116,7 +1134,7 @@
       return { wrap: wrap, input: input };
     }
     var matWrap = document.createElement('label');
-    var mtLabel = document.createElement('span'); mtLabel.className = 'c3d-vh c3d-vh-m'; mtLabel.textContent = 'Materiale';
+    var mtLabel = document.createElement('span'); mtLabel.className = 'c3d-vh c3d-vh-m'; mtLabel.textContent = T('xlsColMaterial');
     var mtName = document.createElement('span'); mtName.className = 'c3d-vh'; mtName.textContent = ' (' + m.name + ')'; mtLabel.appendChild(mtName);
     var matSel = document.createElement('select');
     CONFIG.materials.forEach(function (x) {
@@ -1186,7 +1204,17 @@
     holSel.value = m.hollow ? '1' : '0';
     holSel.addEventListener('change', function () { m.hollow = holSel.value === '1'; update(); });
     holLabel.appendChild(holSel);
-    extra.appendChild(infLabel); extra.appendChild(holLabel); extra.appendChild(supLabel);
+    // Cambi colore (solo filamento, non per i file già processati dallo slicer)
+    var ccLabel = document.createElement('label'); ccLabel.className = 'c3d-file-cc';
+    ccLabel.title = T('ccHelp');
+    ccLabel.appendChild(document.createTextNode(T('colorChanges')));
+    var ccHidden = document.createElement('span'); ccHidden.className = 'c3d-vh'; ccHidden.textContent = ' (' + m.name + ')';
+    ccLabel.appendChild(ccHidden);
+    var ccIn = document.createElement('input'); ccIn.type = 'number'; ccIn.min = 0; ccIn.max = 9999; ccIn.step = 1; ccIn.inputMode = 'numeric';
+    ccIn.value = m.colorChanges || 0;
+    ccIn.addEventListener('input', function () { m.colorChanges = Math.min(9999, Math.max(0, Math.floor(+ccIn.value || 0))); update(); });
+    ccLabel.appendChild(ccIn);
+    extra.appendChild(infLabel); extra.appendChild(holLabel); extra.appendChild(supLabel); extra.appendChild(ccLabel);
     var slicedNote = null;
     if (m.sliced) {
       supLabel.hidden = true;
@@ -1201,7 +1229,7 @@
 
     li.appendChild(pick); li.appendChild(matWrap); li.appendChild(qty.wrap); li.appendChild(scale.wrap); li.appendChild(rm); li.appendChild(extra);
     el.list.appendChild(li);
-    m.row = { qtyIn: qty.input, scaleIn: scale.input, li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, brSel: brSel, teSel: teSel, infLabel: infLabel, holLabel: holLabel, holSel: holSel, infSel: infSel, supBox: supBox, swatch: sw };
+    m.row = { ccLabel: ccLabel, ccIn: ccIn, qtyIn: qty.input, scaleIn: scale.input, li: li, meta: meta, warn: warn, matSel: matSel, prSel: prSel, brSel: brSel, teSel: teSel, infLabel: infLabel, holLabel: holLabel, holSel: holSel, infSel: infSel, supBox: supBox, swatch: sw };
   }
 
   function markActive() {
@@ -1292,7 +1320,7 @@
     }
     var m = { id: nextId++, name: file.name, pos: d.pos || null, stats: stats, sliced: d.sliced || null, thumb: d.thumb || null, fixedUnit: !!d.fixedUnit,
               qty: 1, scale: 100, materialId: el.material.value, printerId: CONFIG.printers.length ? el.printer.value : null, hollow: el.hollow.checked,
-              infill: +el.infill.value || 20, supports: el.supports.checked, unitHint: hint };
+              infill: +el.infill.value || 20, supports: el.supports.checked, colorChanges: 0, unitHint: hint };
     // Stampante e materiale suggeriti dal file (un G-code è sempre a filamento)
     if (CONFIG.printers.length) {
       var hp = d.printerHint ? matchPrinterHint(d.printerHint) : null;
@@ -1369,6 +1397,10 @@
     el.out.classList.remove('is-flash'); void el.out.offsetWidth; el.out.classList.add('is-flash');
     el.out.scrollIntoView({ behavior: 'smooth', block: 'center' });
   });
+  if (el.fail) el.fail.addEventListener('input', function () {
+    var v = parseFloat(String(el.fail.value).replace(',', '.'));
+    if (isFinite(v) && v >= 0 && v <= 100) { failPct = v; scrivi('c3d-fallite', String(v)); update(); }
+  });
   el.energy.addEventListener('input', function () {
     var v = parseFloat(String(el.energy.value).replace(',', '.'));
     if (isFinite(v) && v >= 0) { energyEUR = v / rate(); scrivi('c3d-energia', String(energyEUR)); }
@@ -1406,7 +1438,7 @@
   }
   // Colonne del foglio dei file: l'ordine è fisso e vale per tutte e due le lingue
   var COL = { file: 0, tech: 1, brand: 2, model: 3, material: 4, qty: 5, scale: 6, infill: 7, interior: 8, supports: 9,
-              printerId: 22, materialId: 23 };
+              printerId: 22, materialId: 23, colorChanges: 24 };
   var SHEET_HIDDEN = 'c3d';
 
   function curFmt() { return currency === 'USD' ? '"$"#,##0.00' : '#,##0.00 "€"'; }
@@ -1422,11 +1454,11 @@
       var head = [T('xlsColFile'), T('xlsColTech'), T('xlsColBrand'), T('xlsColModel'), T('xlsColMaterial'), T('quantity'), T('scale'),
         T('xlsColInfill'), T('interior'), T('supports'), T('xlsColSize'), T('xlsColGrams'), T('xlsColMl'), T('xlsColTime'),
         T('xlsColMatCost'), T('rowWear'), T('xlsColEnergy'), T('xlsColPost'), T('xlsColEach'), T('xlsColTotal'), T('xlsColKwh'), T('xlsColNote'),
-        T('xlsColPrinterId'), T('xlsColMaterialId')];
+        T('xlsColPrinterId'), T('xlsColMaterialId'), T('colorChanges')];
       var aoa = [head];
       models.forEach(function (m) {
         var r = m.r, p = printerOf(m), mt = matById(m.materialId), resin = !!r.resin;
-        var each = ((r.mat + r.mach) * (1 - last.disc) + r.energy + (r.post || 0)) * (1 + CONFIG.vat);
+        var each = ((r.mat + r.mach) * (1 - last.disc) + r.energy + (r.post || 0)) * (1 + failRate()) * (1 + CONFIG.vat);
         var note = !r.fits ? T('warnTooBig', { printer: p ? p.name : T('thisPrinter') })
           : !materialAllowed(mt, p) ? T('warnMaterial', { material: mt.name, printer: p ? p.name : T('thisPrinter') }) : '';
         var sl = !!r.sliced;
@@ -1436,7 +1468,7 @@
           r.size.map(function (d) { return num1.format(d); }).join(' × '),
           Math.round(r.grams * 10) / 10, resin ? Math.round(r.ml * 10) / 10 : '', r.hours / 24,
           r.mat * R, r.mach * R, r.energy * R, (r.post || 0) * R, each * R, each * m.qty * R, Math.round(r.kwh * 1000) / 1000, note,
-          p ? printerCode(p) : '', mt.baseName || mt.name]);
+          p ? printerCode(p) : '', mt.baseName || mt.name, resin || sl ? '' : (m.colorChanges || 0)]);
       });
       var n = models.length;
       var tot = [T('xlsTotal'), '', '', '', '', { f: 'SUM(F2:F' + (n + 1) + ')' }, '', '', '', '', '', '', '', '', '', '', '', '', '', { f: 'SUM(T2:T' + (n + 1) + ')' }];
@@ -1447,8 +1479,8 @@
         var tc = ws['N' + i]; if (tc && tc.t === 'n') tc.z = tf;
       }
       ws['T' + (n + 2)].z = cf;
-      ws['!cols'] = [28, 11, 13, 20, 24, 7, 8, 12, 11, 9, 20, 12, 12, 10, 12, 12, 12, 12, 12, 13, 9, 40, 22, 16].map(function (w) { return { wch: w }; });
-      ws['!autofilter'] = { ref: 'A1:X' + (n + 1) };
+      ws['!cols'] = [28, 11, 13, 20, 24, 7, 8, 12, 11, 9, 20, 12, 12, 10, 12, 12, 12, 12, 12, 13, 9, 40, 22, 16, 12].map(function (w) { return { wch: w }; });
+      ws['!autofilter'] = { ref: 'A1:Y' + (n + 1) };
 
       // Foglio 2: riepilogo, con le stesse voci mostrate nella pagina
       var pDef = printer(), q = o.quality;
@@ -1486,7 +1518,7 @@
         ['chiave', 'valore'], ['versione', 1], ['qualita', q.id], ['unita', +el.unit.value || 1], ['energia_eur_kwh', energyEUR], ['valuta', currency],
         ['stampante', pDef ? printerCode(pDef) : ''], ['materiale', matById(el.material.value).baseName || matById(el.material.value).name], ['riempimento', +el.infill.value],
         ['svuotati', el.hollow.checked ? 1 : 0], ['supporti', el.supports.checked ? 1 : 0],
-        ['prezzi_eur_kg', JSON.stringify(myPrices)]
+        ['prezzi_eur_kg', JSON.stringify(myPrices)], ['fallite_percento', failPct]
       ]);
       var wb = X.utils.book_new();
       X.utils.book_append_sheet(wb, ws, T('xlsSheetFiles'));
@@ -1539,15 +1571,16 @@
     var it = norm(r[COL.interior]);
     if (it) s.hollow = /svuot|hollow|cav/.test(it);
     if (r[COL.supports] !== undefined && String(r[COL.supports]).trim() !== '') s.supports = isYes(r[COL.supports]);
+    var ccv = parseInt(r[COL.colorChanges], 10); if (ccv >= 0) s.colorChanges = Math.min(9999, ccv);
     return s;
   }
   function applySettings(m, s) {
-    (m.sliced ? ['printerId', 'materialId', 'qty'] : ['printerId', 'materialId', 'qty', 'scale', 'infill', 'hollow', 'supports']).forEach(function (k) { if (s[k] !== undefined) m[k] = s[k]; });
+    (m.sliced ? ['printerId', 'materialId', 'qty'] : ['printerId', 'materialId', 'qty', 'scale', 'infill', 'hollow', 'supports', 'colorChanges']).forEach(function (k) { if (s[k] !== undefined) m[k] = s[k]; });
     if (m.sliced && CONFIG.printers.length && techOf(printerOf(m)) === 'resina') m.printerId = CONFIG.printers.filter(function (p) { return p.tech !== 'resina'; })[0].id;
     if (!m.row) return;
     m.row.qtyIn.value = m.qty; m.row.scaleIn.value = m.scale;
     m.row.matSel.value = m.materialId; m.row.infSel.value = m.infill;
-    m.row.supBox.checked = m.supports; m.row.holSel.value = m.hollow ? '1' : '0';
+    m.row.supBox.checked = m.supports; m.row.holSel.value = m.hollow ? '1' : '0'; m.row.ccIn.value = m.colorChanges || 0;
     if (m.row.prSel) setPicker(m.row.teSel, m.row.brSel, m.row.prSel, m.printerId);
   }
   function applyGlobals(g) {
@@ -1560,6 +1593,8 @@
     if (isFinite(en) && en >= 0) { energyEUR = en; scrivi('c3d-energia', String(en)); }
     if (g.valuta === 'EUR' || g.valuta === 'USD') { currency = g.valuta; el.currency.value = currency; scrivi('c3d-valuta', currency); makeMoney(); }
     showEnergy();
+    var gf = parseFloat(g.fallite_percento);
+    if (isFinite(gf) && gf >= 0 && gf <= 100) { failPct = gf; scrivi('c3d-fallite', String(gf)); if (el.fail) el.fail.value = String(gf); }
     if (g.prezzi_eur_kg !== undefined && String(g.prezzi_eur_kg).trim() !== '') {
       try {
         var gpz = JSON.parse(String(g.prezzi_eur_kg)), nuovi = {};
