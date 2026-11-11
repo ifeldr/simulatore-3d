@@ -53,6 +53,9 @@ pagina:
   peso_totale: Peso totale
   tempo_totale: Tempo totale
   costo_totale: Costo totale
+  confronto: Confronto rapido
+  cmp_materiali: Materiali
+  cmp_stampanti: Stampanti
   calcola: Calcola
   nota: Stima indicativa calcolata sulla geometria dei file.
   scarica_excel: "⬇ Scarica Excel"
@@ -176,6 +179,16 @@ js:
   slicedNote: Riempimento, supporti e scala sono quelli scelti nello slicer.
   slicedLocked: La scala è già decisa nel file dello slicer
   slicedTech: Un G-code si stampa solo a filamento
+  cmpHelpMat: "Questo file su {printer}, con i materiali che può stampare. Tocca una riga per usarla."
+  cmpHelpPrinter: "Questo file in {material}, sulle stampanti che lo supportano. Tocca una riga per usarla."
+  cmpSliced: "Tempo e grammi restano quelli dello slicer: cambiano prezzo del materiale, usura ed energia."
+  cmpResin: "Con la resina il costo considera questo file da solo sul piatto."
+  cmpCurrent: attuale
+  cmpEach: a pezzo
+  cmpNoFit: non entra
+  cmpNone: Nessuna alternativa compatibile.
+  cmpMore: "Mostra tutte ({n})"
+  cmpLess: Mostra meno
 
 # Domande frequenti sotto il simulatore. Le risposte accettano il Markdown (grassetto, elenchi, link).
 faq:
@@ -215,6 +228,14 @@ faq:
     - d: Posso usare i miei prezzi?
       r: |
         Sì. Accanto al materiale c'è il campo **Prezzo bobina** (o **Prezzo resina**): metti quello che paghi tu e vale per tutti i file con quel materiale. Allo stesso modo puoi cambiare il **costo dell'energia** al kWh. Entrambi vengono ricordati su questo browser; **Ripristina** torna al prezzo predefinito.
+    - d: Come funziona il confronto rapido?
+      r: |
+        Sotto il costo totale, **Confronto rapido** mostra il file selezionato nell'anteprima in due modi:
+
+        - **Materiali**: la stessa stampante con tutti i materiali che può stampare;
+        - **Stampanti**: lo stesso materiale su tutte le stampanti che lo supportano, dalla più economica.
+
+        Per ogni riga vedi peso, tempo, costo a pezzo e differenza rispetto alla scelta attuale. Tocca una riga per applicarla al file. Il costo non comprende il riscaldamento, che non dipende dal file.
     - d: Come salvo un calcolo e lo riprendo dopo?
       r: |
         Con **Scarica Excel** ottieni un file con una riga per ogni file caricato (impostazioni, peso, tempo e costi) e un riepilogo. Più avanti, con **Importa impostazioni**, il simulatore rilegge il file e rimette tutto com'era, compresi i tuoi prezzi.

@@ -102,6 +102,32 @@
 }
 #c3d-calc .c3d-cta:hover{background:var(--c3d-accent-hover)}
 #c3d-calc .c3d-cta:disabled{background:#AEB5C0;cursor:not-allowed}
+#c3d-calc .c3d-cmp{margin-top:14px;border:1px solid var(--c3d-line);border-radius:10px;background:var(--c3d-surface)}
+#c3d-calc .c3d-cmp summary{list-style:none;cursor:pointer;display:flex;align-items:baseline;gap:8px;padding:11px 14px;font-weight:600}
+#c3d-calc .c3d-cmp summary::-webkit-details-marker{display:none}
+#c3d-calc .c3d-cmp summary::before{content:"";flex:none;width:7px;height:7px;border-right:2px solid currentColor;border-bottom:2px solid currentColor;transform:rotate(-45deg);margin-right:4px;position:relative;top:-1px;transition:transform .15s}
+#c3d-calc .c3d-cmp[open] summary::before{transform:rotate(45deg);top:-3px}
+#c3d-calc .c3d-cmp summary small{font-weight:400;color:var(--c3d-muted);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0}
+#c3d-calc .c3d-cmp summary:focus-visible{outline:3px solid var(--c3d-hot);outline-offset:-3px;border-radius:10px}
+#c3d-calc .c3d-cmp-tabs{display:grid;grid-template-columns:1fr 1fr;margin:0 14px;border:1px solid var(--c3d-line);border-radius:8px;overflow:hidden}
+#c3d-calc .c3d-cmp-tabs button{border:0;background:var(--c3d-surface);color:var(--c3d-ink);padding:7px 6px;font:inherit;font-size:14.5px;cursor:pointer}
+#c3d-calc .c3d-cmp-tabs button+button{border-left:1px solid var(--c3d-line)}
+#c3d-calc .c3d-cmp-tabs button[aria-pressed="true"]{background:var(--c3d-accent);color:#fff}
+#c3d-calc .c3d-cmp-tabs button:focus-visible{outline:3px solid var(--c3d-hot);outline-offset:-3px}
+#c3d-calc .c3d-cmp-help{margin:8px 14px 4px;font-size:13px;color:var(--c3d-muted)}
+#c3d-calc .c3d-cmp-list{list-style:none;margin:0;padding:0 6px 6px}
+#c3d-calc .c3d-cmp-item{width:100%;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:8px;border:0;border-radius:7px;background:transparent;color:var(--c3d-ink);font:inherit;text-align:left;cursor:pointer}
+#c3d-calc .c3d-cmp-item:hover{background:var(--c3d-soft)}
+#c3d-calc .c3d-cmp-item:focus-visible{outline:3px solid var(--c3d-hot);outline-offset:-3px}
+#c3d-calc .c3d-cmp-item[aria-current="true"]{background:var(--c3d-soft);box-shadow:inset 3px 0 0 var(--c3d-accent);cursor:default}
+#c3d-calc .c3d-cmp-name{display:flex;flex-direction:column;min-width:0;font-size:15px;font-weight:600}
+#c3d-calc .c3d-cmp-name small,#c3d-calc .c3d-cmp-cost small{font-weight:400;font-size:12.5px;color:var(--c3d-muted)}
+#c3d-calc .c3d-cmp-cost{display:flex;flex-direction:column;align-items:flex-end;flex:none;font-weight:600;font-variant-numeric:tabular-nums;font-size:15px}
+#c3d-calc .c3d-cmp-cost small.is-down{color:#1E7B45}
+#c3d-calc .c3d-cmp-cost small.is-up{color:#9A5B00}
+#c3d-calc .c3d-cmp-tag{display:inline-block;margin-left:6px;padding:0 6px;border-radius:999px;font-size:11.5px;font-weight:600;background:var(--c3d-accent);color:#fff;vertical-align:1px}
+#c3d-calc .c3d-cmp-tag.is-warn{background:transparent;color:var(--c3d-warn);border:1px solid currentColor}
+#c3d-calc .c3d-cmp-more{margin:0 14px 12px;font-size:14px}
 #c3d-calc .c3d-xls{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
 #c3d-calc .c3d-xls-btn{
   padding:10px 12px; border:1px solid var(--c3d-accent); border-radius:8px; background:transparent;

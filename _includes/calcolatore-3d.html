@@ -125,6 +125,16 @@
             <div class="c3d-total-label" id="c3d-total-label">{{ t.costo_totale }}<small id="c3d-summary"></small></div>
             <div class="c3d-total-value" id="c3d-total"></div>
           </div>
+          <details class="c3d-cmp" id="c3d-cmp">
+            <summary><span>{{ t.confronto }}</span><small id="c3d-cmp-file"></small></summary>
+            <div class="c3d-cmp-tabs" role="group" aria-label="{{ t.confronto }}">
+              <button type="button" data-cmp="materiali" aria-pressed="true">{{ t.cmp_materiali }}</button>
+              <button type="button" data-cmp="stampanti" aria-pressed="false">{{ t.cmp_stampanti }}</button>
+            </div>
+            <p class="c3d-cmp-help" id="c3d-cmp-help"></p>
+            <ul class="c3d-cmp-list" id="c3d-cmp-list"></ul>
+            <button type="button" class="c3d-linkbtn c3d-cmp-more" id="c3d-cmp-more" hidden></button>
+          </details>
         </div>
         <button type="button" class="c3d-cta" id="c3d-cta" disabled>{{ t.calcola }}</button>
         <div class="c3d-xls">

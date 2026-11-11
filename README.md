@@ -61,6 +61,13 @@ e il costo di lavaggio e polimerizzazione per ogni stampa.
   e finisce anche nel file Excel, quindi si ripristina con "Importa impostazioni". **Ripristina** torna al prezzo predefinito.
 - I prezzi predefiniti restano quelli di `prezzo_kg` in `_data/calcolatore_3d.yml`.
 
+## Confronto rapido
+
+Sotto il totale, il riquadro **Confronto rapido** prende il file selezionato nell'anteprima e mostra
+peso, tempo e costo a pezzo con tutti i materiali compatibili con la sua stampante, oppure con il suo
+materiale su tutte le stampanti che lo supportano (dalla più economica, prime 8 e poi "Mostra tutte").
+Toccando una riga la scelta passa al file. Il costo è quello del file stampato da solo, senza riscaldamento.
+
 ## Excel
 
 - **Scarica Excel** crea un file `.xlsx` con un foglio per i file (una riga per STL, con impostazioni,

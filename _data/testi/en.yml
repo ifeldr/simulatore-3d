@@ -53,6 +53,9 @@ pagina:
   peso_totale: Total weight
   tempo_totale: Total time
   costo_totale: Total cost
+  confronto: Quick comparison
+  cmp_materiali: Materials
+  cmp_stampanti: Printers
   calcola: Calculate
   nota: Rough estimate based on the geometry of the files.
   scarica_excel: "⬇ Download Excel"
@@ -176,6 +179,16 @@ js:
   slicedNote: Infill, supports and scale are the ones set in the slicer.
   slicedLocked: Scale is already set in the slicer file
   slicedTech: G-code is filament only
+  cmpHelpMat: "This file on {printer}, with the materials it can print. Tap a row to use it."
+  cmpHelpPrinter: "This file in {material}, on the printers that support it. Tap a row to use it."
+  cmpSliced: "Time and grams stay as in the slicer file: material price, wear and energy change."
+  cmpResin: "For resin the cost assumes this file alone on the plate."
+  cmpCurrent: current
+  cmpEach: each
+  cmpNoFit: doesn't fit
+  cmpNone: No compatible alternatives.
+  cmpMore: "Show all ({n})"
+  cmpLess: Show fewer
 
 # Frequently asked questions below the simulator. Answers accept Markdown (bold, lists, links).
 faq:
@@ -215,6 +228,14 @@ faq:
     - d: Can I use my own prices?
       r: |
         Yes. Next to the material there's a **Spool price** (or **Resin price**) field: enter what you pay and it applies to every file in that material. You can change the **electricity price** per kWh the same way. Both are remembered on this browser; **Reset** goes back to the default price.
+    - d: How does the quick comparison work?
+      r: |
+        Below the total cost, **Quick comparison** shows the file selected in the preview in two ways:
+
+        - **Materials**: the same printer with every material it can print;
+        - **Printers**: the same material on every printer that supports it, cheapest first.
+
+        Each row shows weight, time, cost per part and the difference from the current choice. Tap a row to apply it to the file. The cost leaves out warm-up, which doesn't depend on the file.
     - d: How do I save a calculation and pick it up later?
       r: |
         **Download Excel** gives you a file with one row per uploaded file (settings, weight, time and costs) and a summary. Later, **Import settings** reads the file back and restores everything, including your prices.

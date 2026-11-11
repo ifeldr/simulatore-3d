@@ -1,4 +1,4 @@
-/* Calcolatore costo stampa 3D da file STL, v1.8 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
+/* Calcolatore costo stampa 3D da file STL, v1.9 per Jekyll / GitHub Pages (filamento e resina, italiano e inglese, euro e dollari) */
 (function () {
   'use strict';
   // Percorso di questo script: serve per caricare la libreria Excel che sta nella stessa cartella
@@ -203,6 +203,7 @@
     time: $('c3d-time'), lines: $('c3d-lines'), total: $('c3d-total'), totalLabel: $('c3d-total-label'), summary: $('c3d-summary'), cta: $('c3d-cta'),
     price: $('c3d-price'), priceName: $('c3d-price-name'), priceUnit: $('c3d-price-unit'), priceHelp: $('c3d-price-help'), priceReset: $('c3d-price-reset'),
     thumb: $('c3d-thumb'), nothumb: $('c3d-nothumb'),
+    cmp: $('c3d-cmp'), cmpFile: $('c3d-cmp-file'), cmpHelp: $('c3d-cmp-help'), cmpList: $('c3d-cmp-list'), cmpMore: $('c3d-cmp-more'),
     xlsOut: $('c3d-xls-out'), xlsIn: $('c3d-xls-in'), xlsFile: $('c3d-xls-file'), xlsMsg: $('c3d-xls-msg')
   };
 
@@ -1001,6 +1002,96 @@
       el.dims.textContent = cur.sliced ? T('slicedFile') + (cur.sliced.plates > 1 ? ', ' + T('plates', { n: cur.sliced.plates }) : '') : fmtSize(cur.r.size);
       if (view && cur.pos) { applyViewScale(cur.sliced ? 1 : unitOf(cur, o) * cur.scale / 100); setMeshColor(matById(cur.materialId).color); }
     }
+    renderCompare();
+  }
+
+  // ---------- Confronto rapido ----------
+  // Il file selezionato con tutti i materiali della sua stampante, oppure con il suo materiale su tutte
+  // le stampanti che lo supportano. Il costo è a pezzo, con il file stampato da solo (per la resina conta
+  // il piatto) e senza il riscaldamento, che non dipende dal file. Toccando una riga la scelta passa al file.
+  var cmpMode = leggi('c3d-confronto') === 'stampanti' ? 'stampanti' : 'materiali';
+  var cmpAll = false;
+  var CMP_MAX = 8;
+  function soloEach(c, o) {
+    var r = estimatePiece(c, o);
+    if (r.resin) allocateResin([{ m: c, r: r }]);
+    return { r: r, each: ((r.mat + r.mach) + r.energy + (r.post || 0)) * (1 + CONFIG.vat) };
+  }
+  function clone(m, k, v) { var c = {}; for (var x in m) c[x] = m[x]; c[k] = v; return c; }
+  function renderCompare() {
+    if (!el.cmp) return;
+    var m = current();
+    el.cmp.hidden = !m || !CONFIG.printers.length;
+    if (m) el.cmpFile.textContent = m.name;
+    if (el.cmp.hidden || !el.cmp.open) return;
+    Array.prototype.forEach.call(el.cmp.querySelectorAll('[data-cmp]'), function (b) { b.setAttribute('aria-pressed', String(b.getAttribute('data-cmp') === cmpMode)); });
+    var o = globals(), pr = printerOf(m), mt = matById(m.materialId), tech = techOf(pr);
+    var base = soloEach(m, o), rows = [];
+    if (cmpMode === 'materiali') {
+      CONFIG.materials.forEach(function (x) {
+        if ((x.tech || 'filamento') !== tech || !materialAllowed(x, pr)) return;
+        rows.push({ key: x.id, name: x.name, e: soloEach(clone(m, 'materialId', x.id), o), cur: x.id === m.materialId });
+      });
+      el.cmpHelp.textContent = T('cmpHelpMat', { printer: pr ? pr.name : '' });
+    } else {
+      CONFIG.printers.forEach(function (p) {
+        if (techOf(p) !== tech || !materialAllowed(mt, p)) return;
+        rows.push({ key: p.id, name: p.name, e: soloEach(clone(m, 'printerId', p.id), o), cur: p.id === m.printerId });
+      });
+      el.cmpHelp.textContent = T('cmpHelpPrinter', { material: mt.name });
+    }
+    if (m.sliced) el.cmpHelp.textContent += ' ' + T('cmpSliced');
+    else if (tech === 'resina') el.cmpHelp.textContent += ' ' + T('cmpResin');
+    // prima quelli in cui il pezzo entra, poi dal più economico
+    rows.sort(function (a, b) { return (b.e.r.fits - a.e.r.fits) || (a.e.each - b.e.each); });
+    var shown = rows;
+    if (!cmpAll && rows.length > CMP_MAX) {
+      shown = rows.slice(0, CMP_MAX);
+      var curRow = rows.filter(function (x) { return x.cur; })[0];
+      if (curRow && shown.indexOf(curRow) < 0) shown[CMP_MAX - 1] = curRow;
+    }
+    el.cmpList.textContent = '';
+    if (!rows.length) { var none = document.createElement('li'); none.className = 'c3d-cmp-help'; none.textContent = T('cmpNone'); el.cmpList.appendChild(none); }
+    shown.forEach(function (x) {
+      var li = document.createElement('li'), b = document.createElement('button');
+      b.type = 'button'; b.className = 'c3d-cmp-item';
+      if (x.cur) b.setAttribute('aria-current', 'true');
+      var nm = document.createElement('span'); nm.className = 'c3d-cmp-name';
+      var t = document.createElement('span'); t.textContent = x.name;
+      if (x.cur) { var tag = document.createElement('span'); tag.className = 'c3d-cmp-tag'; tag.textContent = T('cmpCurrent'); t.appendChild(tag); }
+      if (!x.e.r.fits) { var w = document.createElement('span'); w.className = 'c3d-cmp-tag is-warn'; w.textContent = T('cmpNoFit'); t.appendChild(w); }
+      var sm = document.createElement('small');
+      sm.textContent = (x.e.r.resin ? T('mlResin', { n: num1.format(x.e.r.ml) }) : num1.format(x.e.r.grams) + ' g') + ' · ' + fmtTime(x.e.r.hours);
+      nm.appendChild(t); nm.appendChild(sm);
+      var cost = document.createElement('span'); cost.className = 'c3d-cmp-cost';
+      cost.appendChild(document.createTextNode(money.format(x.e.each)));
+      var d = document.createElement('small'), diff = x.e.each - base.each;
+      if (x.cur) d.textContent = T('cmpEach');
+      else if (Math.abs(diff) < 0.005) d.textContent = '=';
+      else { d.textContent = (diff > 0 ? '+' : '−') + money.format(Math.abs(diff)); d.className = diff > 0 ? 'is-up' : 'is-down'; }
+      cost.appendChild(d);
+      b.appendChild(nm); b.appendChild(cost);
+      b.setAttribute('aria-label', x.name + ', ' + money.format(x.e.each) + (x.cur ? ', ' + T('cmpCurrent') : ''));
+      if (!x.cur) b.addEventListener('click', function () { applyCompare(m, x.key); });
+      li.appendChild(b); el.cmpList.appendChild(li);
+    });
+    el.cmpMore.hidden = rows.length <= CMP_MAX;
+    el.cmpMore.textContent = cmpAll ? T('cmpLess') : T('cmpMore', { n: rows.length });
+  }
+  function applyCompare(m, key) {
+    if (cmpMode === 'materiali') { m.materialId = key; m.row.matSel.value = key; }
+    else { m.printerId = key; if (m.row.prSel) setPicker(m.row.teSel, m.row.brSel, m.row.prSel, key); }
+    refreshMaterialOptions(); updateGrid(); update();
+    var now = el.cmpList.querySelector('.c3d-cmp-item[aria-current="true"]');
+    if (now) now.focus({ preventScroll: true });
+  }
+  if (el.cmp) {
+    if (leggi('c3d-confronto-aperto') === '1') el.cmp.open = true;
+    el.cmp.addEventListener('toggle', function () { scrivi('c3d-confronto-aperto', el.cmp.open ? '1' : '0'); renderCompare(); });
+    Array.prototype.forEach.call(el.cmp.querySelectorAll('[data-cmp]'), function (b) {
+      b.addEventListener('click', function () { cmpMode = b.getAttribute('data-cmp'); cmpAll = false; scrivi('c3d-confronto', cmpMode); renderCompare(); });
+    });
+    el.cmpMore.addEventListener('click', function () { cmpAll = !cmpAll; renderCompare(); });
   }
 
   // ---------- Elenco file ----------
