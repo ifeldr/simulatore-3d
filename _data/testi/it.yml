@@ -196,11 +196,6 @@ faq:
         Il **tempo** dipende dal volume da stampare, dalla qualità (altezza dello strato), dal materiale (il TPU va più piano) e dalla velocità della stampante, più qualche secondo a ogni cambio di strato e 5 minuti di riscaldamento per stampante.
 
         Con la **resina** il tempo dipende invece dall'altezza: tutti i pezzi sullo stesso piatto si stampano insieme, quindi conta il numero di strati del pezzo più alto. Un pezzo svuotato usa pareti di 2 mm.
-    - d: Quanto è precisa la stima?
-      r: |
-        Con un STL o un 3MF di progetto è una **stima indicativa**: rispetto allo slicer può scostarsi anche del 20–30%, a seconda di forma del pezzo, impostazioni e stampante.
-
-        Se vuoi un numero esatto, carica il **G-code** o il **3MF già processato** dallo slicer: tempo e grammi sono quelli calcolati dallo slicer, e il simulatore aggiunge solo i costi.
     - d: Quali file posso caricare?
       r: |
         - **STL**, binario o di testo;

@@ -196,11 +196,6 @@ faq:
         **Time** depends on the volume to print, the quality (layer height), the material (TPU is slower) and the printer's speed, plus a few seconds per layer change and 5 minutes of warm-up per printer.
 
         With **resin**, time depends on height instead: all parts on the same plate print together, so what counts is the number of layers of the tallest part. A hollow part uses 2 mm walls.
-    - d: How accurate is the estimate?
-      r: |
-        With an STL or a 3MF project it's a **rough estimate**: it can differ from your slicer by 20–30% or so, depending on the part's shape, the settings and the printer.
-
-        For an exact figure, upload the **G-code** or the **sliced 3MF**: time and grams are the ones your slicer calculated, and the simulator only adds the costs.
     - d: Which files can I upload?
       r: |
         - **STL**, binary or ASCII;
