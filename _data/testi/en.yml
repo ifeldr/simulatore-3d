@@ -1,4 +1,4 @@
-# Texts for the English version of the simulator (address: /simulatore-3d/en/)
+# Texts for the English version of the simulator (address: /en/)
 # Words in braces, like {name}, are replaced by the simulator: leave them as they are.
 lingua: en
 locale: en-US

@@ -1,11 +1,11 @@
 # Simulatore costo stampa 3D
 
 Pagina che calcola peso, tempo e costo reale di una stampa 3D da uno o più file STL.
-È collegata al sito principale https://ifeldr.github.io ma vive in questo repository separato,
-all'indirizzo https://ifeldr.github.io/simulatore-3d/, in due lingue:
+È collegata al sito principale https://lorenzogarbi.it ma vive in questo repository separato,
+all'indirizzo https://simulatore-3d.lorenzogarbi.it/, in due lingue:
 
-- italiano: https://ifeldr.github.io/simulatore-3d/it/
-- inglese: https://ifeldr.github.io/simulatore-3d/en/
+- italiano: https://simulatore-3d.lorenzogarbi.it/it/
+- inglese: https://simulatore-3d.lorenzogarbi.it/en/
 
 L'indirizzo principale porta alla versione giusta: quella scelta in precedenza con il selettore
 IT | EN oppure, alla prima visita, quella della lingua del browser (italiano o, altrimenti, inglese).

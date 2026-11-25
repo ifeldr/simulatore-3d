@@ -83,7 +83,7 @@ layout: null
   </div>
 </footer>
 <script>
-// La lingua scelta a mano viene ricordata: la pagina principale (/simulatore-3d/) la userà alla prossima visita
+// La lingua scelta a mano viene ricordata: la pagina principale (/) la userà alla prossima visita
 document.querySelectorAll('.lingue a').forEach(function (a) {
   a.addEventListener('click', function () { try { localStorage.setItem('c3d-lingua', a.getAttribute('data-lingua')); } catch (e) {} });
 });
